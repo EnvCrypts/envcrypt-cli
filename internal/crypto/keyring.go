@@ -29,3 +29,11 @@ func LoadPrivateKey(user string) ([]byte, error) {
 
 	return decoded, nil
 }
+
+func DeletePrivateKey(user string) error {
+	err := keyring.Delete("envcrypt", user)
+	if err != nil {
+		return err
+	}
+	return nil
+}
