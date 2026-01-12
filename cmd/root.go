@@ -3,6 +3,7 @@ package cmd
 import (
 	"os"
 
+	"github.com/envcrypts/envcrypt-cli/internal/app"
 	"github.com/spf13/cobra"
 )
 
@@ -14,7 +15,10 @@ All secrets are encrypted and decrypted client-side, with immutable versioning, 
 EnvCrypt enables secure collaboration and CI/CD secret injection without server-side decryption.`,
 }
 
-func Execute() {
+var Application *app.App
+
+func Execute(a *app.App) {
+	Application = a
 	err := rootCmd.Execute()
 	if err != nil {
 		os.Exit(1)

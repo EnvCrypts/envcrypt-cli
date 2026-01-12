@@ -21,8 +21,12 @@ THE SOFTWARE.
 */
 package main
 
-import "github.com/envcrypts/envcrypt-cli/cmd"
+import (
+	"github.com/envcrypts/envcrypt-cli/cmd"
+	"github.com/envcrypts/envcrypt-cli/internal/app"
+)
 
 func main() {
-	cmd.Execute()
+	a := app.NewApp("http://localhost:8080")
+	cmd.Execute(a)
 }
