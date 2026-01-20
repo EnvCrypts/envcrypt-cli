@@ -1,0 +1,19 @@
+package cmd
+
+import (
+	"github.com/spf13/cobra"
+)
+
+// listCmd represents the project list command
+var listCmd = &cobra.Command{
+	Use:   "list",
+	Short: "List projects",
+	Long:  "List all projects you have access to.",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return nil
+	},
+}
+
+func init() {
+	projectCmd.AddCommand(listCmd)
+}
