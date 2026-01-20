@@ -37,6 +37,11 @@ func (app *App) Login(ctx context.Context, email, password string) error {
 		return err
 	}
 
+	err = cryptoutils.SaveUserEmail(email)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -67,6 +72,11 @@ func (app *App) Register(ctx context.Context, email, password string) error {
 		return err
 	}
 
+	err = cryptoutils.SaveUserEmail(email)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -75,5 +85,11 @@ func (app *App) Logout(email string) error {
 	if err != nil {
 		return err
 	}
+
+	err = cryptoutils.RemoveUserEmail()
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

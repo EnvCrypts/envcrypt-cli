@@ -22,11 +22,21 @@ THE SOFTWARE.
 package main
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/envcrypts/envcrypt-cli/cmd"
 	"github.com/envcrypts/envcrypt-cli/internal/app"
+	"github.com/envcrypts/envcrypt-cli/internal/config"
 )
 
 func main() {
+	
+	if err := config.Load(); err != nil {
+		fmt.Println("Failed to load config:", err)
+		os.Exit(1)
+	}
+
 	a := app.NewApp("http://localhost:8080")
 	cmd.Execute(a)
 }

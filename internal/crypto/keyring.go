@@ -3,6 +3,7 @@ package cryptoutils
 import (
 	"encoding/base64"
 
+	"github.com/spf13/viper"
 	"github.com/zalando/go-keyring"
 )
 
@@ -36,4 +37,14 @@ func DeletePrivateKey(user string) error {
 		return err
 	}
 	return nil
+}
+
+func SaveUserEmail(email string) error {
+	viper.Set("user.email", email)
+	return viper.WriteConfig()
+}
+
+func RemoveUserEmail() error {
+	viper.Set("user.email", "")
+	return viper.WriteConfig()
 }
