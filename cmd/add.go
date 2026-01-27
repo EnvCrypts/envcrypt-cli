@@ -1,40 +1,56 @@
 package cmd
 
 import (
-	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
 
 var (
-	addMemberEmail string
-	addMemberRole  string
+	addMemberEmail   string
+	addMemberRole    string
+	addMemberProject string
 )
 
 // addCmd represents the project member add command
 var addCmd = &cobra.Command{
-	Use:   "add <project>",
-	Short: "Add a user to a project",
-	Long:  "Add a user to a project and assign them a role.",
-	Args:  cobra.ExactArgs(1),
+	Use:          "add [project]",
+	Short:        "Add a user to a project",
+	Long:         "Add a user to a project and assign them a role.",
+	Args:         cobra.MaximumNArgs(1),
+	SilenceUsage: true,
+
 	RunE: func(cmd *cobra.Command, args []string) error {
-		projectName := args[0]
+		// Resolve project name
+		projectName := addMemberProject
+		if projectName == "" && len(args) == 1 {
+			projectName = args[0]
+		}
 
-		//if err := Application.AddProjectMember(
-		//	cmd.Context(),
-		//	projectName,
-		//	addMemberEmail,
-		//	addMemberRole,
-		//); err != nil {
-		//	return fmt.Errorf("❌ failed to add member: %w", err)
-		//}
+		if projectName == "" {
+			return Error("project name is required", nil)
+		}
 
-		fmt.Printf(
-			"✅ Added %s as %s to project %q\n",
+		role := strings.ToLower(addMemberRole)
+		if role != "admin" && role != "member" {
+			return Error("invalid role (must be admin or member)", nil)
+		}
+
+		if err := Application.AddUserToProject(
+			cmd.Context(),
 			addMemberEmail,
-			addMemberRole,
 			projectName,
+			role,
+		); err != nil {
+			return Error("failed to add member", err)
+		}
+
+		Success(
+			"Added " + addMemberEmail +
+				" as " + role +
+				" to project " + projectName,
 		)
+
 		return nil
 	},
 }
@@ -42,21 +58,26 @@ var addCmd = &cobra.Command{
 func init() {
 	memberCmd.AddCommand(addCmd)
 
-	addCmd.Flags().StringVarP(
-		&addMemberEmail,
-		"email",
-		"e",
+	addCmd.Flags().StringVar(
+		&addMemberProject,
+		"project",
 		"",
-		"Email address of the user",
+		"Project name",
 	)
 
-	addCmd.Flags().StringVarP(
+	addCmd.Flags().StringVar(
+		&addMemberEmail,
+		"member-email",
+		"",
+		"Email address of the user to add",
+	)
+
+	addCmd.Flags().StringVar(
 		&addMemberRole,
-		"role",
-		"r",
-		"viewer",
-		"Role to assign (admin, user)",
+		"member-role",
+		"member",
+		"Role to assign (admin, member)",
 	)
 
-	addCmd.MarkFlagRequired("email")
+	addCmd.MarkFlagRequired("member-email")
 }
