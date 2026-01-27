@@ -8,6 +8,7 @@ import (
 )
 
 func Load() error {
+
 	dir, err := os.UserConfigDir()
 	if err != nil {
 		return err

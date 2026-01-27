@@ -42,6 +42,11 @@ func (app *App) Login(ctx context.Context, email, password string) error {
 		return err
 	}
 
+	err = cryptoutils.SaveUserId(responseBody.User.Id)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -77,6 +82,11 @@ func (app *App) Register(ctx context.Context, email, password string) error {
 		return err
 	}
 
+	err = cryptoutils.SaveUserId(responseBody.User.Id)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -91,5 +101,9 @@ func (app *App) Logout(email string) error {
 		return err
 	}
 
+	err = cryptoutils.RemoveUserId()
+	if err != nil {
+		return err
+	}
 	return nil
 }

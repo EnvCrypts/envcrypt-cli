@@ -10,10 +10,12 @@ var force bool
 
 // deleteCmd represents the project delete command
 var deleteCmd = &cobra.Command{
-	Use:   "delete <project>",
-	Short: "Delete a project",
-	Long:  "Delete a project and all associated encrypted data.",
-	Args:  cobra.ExactArgs(1),
+	Use:          "delete <project>",
+	Short:        "Delete a project",
+	Long:         "Delete a project and all associated encrypted data.",
+	Args:         cobra.ExactArgs(1),
+	SilenceUsage: true,
+
 	RunE: func(cmd *cobra.Command, args []string) error {
 		projectName := args[0]
 
@@ -29,11 +31,11 @@ var deleteCmd = &cobra.Command{
 			}
 		}
 
-		//if err := Application.DeleteProject(cmd.Context(), projectName); err != nil {
-		//	return fmt.Errorf("❌ failed to delete project %q: %w", projectName, err)
-		//}
+		if err := Application.DeleteProject(cmd.Context(), projectName); err != nil {
+			return fmt.Errorf("failed to delete project %q: %w", projectName, err)
+		}
 
-		fmt.Printf("✅ Project %q deleted\n", projectName)
+		fmt.Printf("Project %q deleted\n", projectName)
 		return nil
 	},
 }

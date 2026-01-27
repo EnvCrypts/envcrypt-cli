@@ -15,7 +15,8 @@ type CreateRequestBody struct {
 }
 
 type CreateResponseBody struct {
-	Message string `json:"message"`
+	Message string   `json:"message"`
+	User    UserBody `json:"user"`
 }
 
 type LoginRequestBody struct {
@@ -35,4 +36,13 @@ type UserBody struct {
 type LoginResponseBody struct {
 	Message string   `json:"message"`
 	User    UserBody `json:"user"`
+}
+
+type UserKeyRequestBody struct {
+	Email string `json:"email"`
+}
+type UserKeyResponseBody struct {
+	Message   string    `json:"message"`
+	UserId    uuid.UUID `json:"user_id"`
+	PublicKey []byte    `json:"public_key"`
 }

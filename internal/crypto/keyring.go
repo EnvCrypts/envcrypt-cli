@@ -2,7 +2,10 @@ package cryptoutils
 
 import (
 	"encoding/base64"
+	"os"
+	"path/filepath"
 
+	"github.com/google/uuid"
 	"github.com/spf13/viper"
 	"github.com/zalando/go-keyring"
 )
@@ -41,10 +44,46 @@ func DeletePrivateKey(user string) error {
 
 func SaveUserEmail(email string) error {
 	viper.Set("user.email", email)
+
+	dir, err := os.UserConfigDir()
+	if err != nil {
+		return err
+	}
+
+	appDir := filepath.Join(dir, "envcrypt")
+	path := filepath.Join(appDir, "config.yaml")
+
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return viper.WriteConfigAs(path)
+	}
+
 	return viper.WriteConfig()
 }
 
 func RemoveUserEmail() error {
 	viper.Set("user.email", "")
+	return viper.WriteConfig()
+}
+
+func SaveUserId(id uuid.UUID) error {
+	viper.Set("user.id", id.String())
+
+	dir, err := os.UserConfigDir()
+	if err != nil {
+		return err
+	}
+
+	appDir := filepath.Join(dir, "envcrypt")
+	path := filepath.Join(appDir, "config.yaml")
+
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return viper.WriteConfigAs(path)
+	}
+
+	return viper.WriteConfig()
+}
+
+func RemoveUserId() error {
+	viper.Set("user.id", "")
 	return viper.WriteConfig()
 }
