@@ -1,32 +1,30 @@
 package cmd
 
 import (
-	"errors"
-
 	"github.com/spf13/cobra"
 )
 
 var logoutCmd = &cobra.Command{
 	Use:   "logout",
-	Short: "Lock your EnvCrypt identity and clear local authentication state.",
+	Short: "Lock your EnvCrypt session",
 	Long: `Logout securely ends your EnvCrypt session by discarding any
-in-memory keys and authentication tokens.
+in-memory keys and clearing local authentication state.
 
-This ensures that encrypted environment variables cannot be accessed
-again without re-authenticating and unlocking your local identity.`,
-	SilenceUsage: true,
+Encrypted environment variables cannot be accessed again without
+re-authenticating.`,
+	SilenceUsage:  true,
+	SilenceErrors: true,
+
 	RunE: func(cmd *cobra.Command, args []string) error {
-		err := Application.Logout(email)
-		if err != nil {
-			return errors.New("user not logged in")
+		if err := Application.Logout(email); err != nil {
+			return Error("not logged in", err)
 		}
-		prettySuccess("Logged out successfully")
+
+		Success("Logged out successfully")
 		return nil
 	},
 }
 
 func init() {
-	logoutCmd.Flags().StringVarP(&email, "email", "e", "", "Email address")
-	logoutCmd.MarkFlagRequired("email")
 	rootCmd.AddCommand(logoutCmd)
 }

@@ -25,15 +25,15 @@ it with your EnvCrypt account using end-to-end encryption.`,
 		fmt.Println()
 
 		if err != nil {
-			return prettyError("Failed to read password", err)
+			return Error("Failed to read password", err)
 		}
 
 		err = Application.Register(cmd.Context(), email, string(password))
 		if err != nil {
-			return prettyError("Registration failed", err)
+			return Error("Registration failed", err)
 		}
 
-		prettySuccess("Registration successful!")
+		Success("Registration successful!")
 		return nil
 	},
 }

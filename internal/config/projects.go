@@ -14,6 +14,19 @@ type ProjectCreateResponse struct {
 	Message string `json:"message"`
 }
 
+type ListProjectRequest struct {
+	UserId uuid.UUID `json:"user_id"`
+}
+type Project struct {
+	Id   uuid.UUID `json:"project_id"`
+	Name string    `json:"name"`
+	Role string    `json:"role"`
+}
+
+type ListProjectResponse struct {
+	Projects []Project `json:"projects"`
+}
+
 type ProjectDeleteRequest struct {
 	ProjectName string    `json:"project_name"`
 	UserId      uuid.UUID `json:"user_id"`

@@ -8,34 +8,40 @@ import (
 
 var force bool
 
-// deleteCmd represents the project delete command
 var deleteCmd = &cobra.Command{
-	Use:          "delete <project>",
-	Short:        "Delete a project",
-	Long:         "Delete a project and all associated encrypted data.",
-	Args:         cobra.ExactArgs(1),
-	SilenceUsage: true,
+	Use:           "delete <project>",
+	Short:         "Delete a project",
+	Long:          "Delete a project and all associated encrypted data.",
+	Args:          cobra.ExactArgs(1),
+	SilenceUsage:  true,
+	SilenceErrors: true,
 
 	RunE: func(cmd *cobra.Command, args []string) error {
 		projectName := args[0]
 
 		if !force {
-			fmt.Printf("⚠️  This will permanently delete project %q.\n", projectName)
-			fmt.Print("Are you sure? (y/N): ")
+			ok := ConfirmDangerousAction(
+				fmt.Sprintf(
+					"This will permanently delete project %q.",
+					projectName,
+				),
+				projectName,
+			)
 
-			var confirm string
-			fmt.Scanln(&confirm)
-			if confirm != "y" && confirm != "Y" {
-				fmt.Println("Aborted.")
+			if !ok {
+				Info("Aborted.")
 				return nil
 			}
 		}
 
 		if err := Application.DeleteProject(cmd.Context(), projectName); err != nil {
-			return fmt.Errorf("failed to delete project %q: %w", projectName, err)
+			return Error(
+				fmt.Sprintf("failed to delete project %q", projectName),
+				err,
+			)
 		}
 
-		fmt.Printf("Project %q deleted\n", projectName)
+		Success(fmt.Sprintf("Project %q deleted", projectName))
 		return nil
 	},
 }

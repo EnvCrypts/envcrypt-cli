@@ -19,10 +19,10 @@ var createCmd = &cobra.Command{
 
 		err := Application.CreateProject(context.Background(), projectName)
 		if err != nil {
-			return fmt.Errorf("failed to create project %q: %w", projectName, err)
+			return Error(fmt.Sprintf("failed to create project %q", projectName), err)
 		}
 
-		fmt.Printf("Project %q created\n", projectName)
+		Success(fmt.Sprintf("Project %q created\n", projectName))
 		return nil
 	},
 }

@@ -52,6 +52,29 @@ func (app *App) CreateProject(ctx context.Context, projectName string) error {
 	return nil
 }
 
+func (app *App) ListProjects(ctx context.Context) (*config.ListProjectResponse, error) {
+	userId := viper.GetString("user.id")
+	if userId == "" {
+		return nil, errors.New("no user id found")
+	}
+
+	uid, err := uuid.Parse(userId)
+	if err != nil {
+		return nil, err
+	}
+
+	projectsReq := config.ListProjectRequest{
+		UserId: uid,
+	}
+
+	var projectsRes config.ListProjectResponse
+	if err := app.HttpClient.Do(ctx, "POST", "/projects/list", projectsReq, &projectsRes); err != nil {
+		return nil, err
+	}
+
+	return &projectsRes, nil
+}
+
 func (app *App) DeleteProject(ctx context.Context, projectName string) error {
 	email, userId := viper.GetString("user.email"), viper.GetString("user.id")
 
