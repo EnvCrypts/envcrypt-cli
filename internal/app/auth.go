@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"errors"
 
 	"github.com/envcrypts/envcrypt-cli/internal/config"
 	cryptoutils "github.com/envcrypts/envcrypt-cli/internal/crypto"
@@ -91,19 +92,23 @@ func (app *App) Register(ctx context.Context, email, password string) error {
 }
 
 func (app *App) Logout(email string) error {
-	err := cryptoutils.DeletePrivateKey(email)
-	if err != nil {
-		return err
+	var errs []error
+
+	if err := cryptoutils.DeletePrivateKey(email); err != nil {
+		errs = append(errs, err)
 	}
 
-	err = cryptoutils.RemoveUserEmail()
-	if err != nil {
-		return err
+	if err := cryptoutils.RemoveUserEmail(); err != nil {
+		errs = append(errs, err)
 	}
 
-	err = cryptoutils.RemoveUserId()
-	if err != nil {
-		return err
+	if err := cryptoutils.RemoveUserId(); err != nil {
+		errs = append(errs, err)
 	}
+
+	if len(errs) > 0 {
+		return errors.Join(errs...)
+	}
+
 	return nil
 }

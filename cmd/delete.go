@@ -47,7 +47,7 @@ var deleteCmd = &cobra.Command{
 }
 
 func init() {
-	projectCmd.AddCommand(deleteCmd)
+	rootCmd.AddCommand(deleteCmd)
 
 	deleteCmd.Flags().BoolVar(
 		&force,

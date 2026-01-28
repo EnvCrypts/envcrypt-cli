@@ -46,7 +46,7 @@ var grantCmd = &cobra.Command{
 }
 
 func init() {
-	memberCmd.AddCommand(grantCmd)
+	rootCmd.AddCommand(grantCmd)
 
 	grantCmd.Flags().StringVar(
 		&grantMemberProject,

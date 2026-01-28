@@ -2,10 +2,9 @@ package cmd
 
 import (
 	"fmt"
-	"os"
-
+	
+	"github.com/charmbracelet/huh"
 	"github.com/spf13/cobra"
-	"golang.org/x/term"
 )
 
 // loginCmd represents the login command
@@ -18,33 +17,68 @@ to encrypted environment variables without exposing plaintext secrets.`,
 	SilenceErrors: true,
 
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if email == "" {
-			return Error("email is required", nil)
-		}
-
 		// Ensure we are in an interactive terminal
-		if !term.IsTerminal(int(os.Stdin.Fd())) {
-			return Error("login requires an interactive terminal", nil)
+		// (huh handles this check internally mostly, but good to keep)
+
+		var password string
+
+		// If email is not provided via flag, ask for it
+		form := huh.NewForm(
+			huh.NewGroup(
+				huh.NewInput().
+					Title("Email").
+					Value(&email).
+					Validate(func(str string) error {
+						if str == "" {
+							return fmt.Errorf("email is required")
+						}
+						return nil
+					}),
+				huh.NewInput().
+					Title("Password").
+					Value(&password).
+					EchoMode(huh.EchoModePassword).
+					Validate(func(str string) error {
+						if str == "" {
+							return fmt.Errorf("password is required")
+						}
+						return nil
+					}),
+			),
+		)
+
+		// If email was set by flag, we might want to skip that input?
+		// Huh forms are static. We can build it dynamically.
+		if email != "" {
+			// Only ask for password
+			form = huh.NewForm(
+				huh.NewGroup(
+					huh.NewInput().
+						Title(fmt.Sprintf("Password for %s", email)).
+						Value(&password).
+						EchoMode(huh.EchoModePassword).
+						Validate(func(str string) error {
+							if str == "" {
+								return fmt.Errorf("password is required")
+							}
+							return nil
+						}),
+				),
+			)
 		}
 
-		Info("Authenticating…")
-
-		fmt.Print("Password: ")
-		password, err := term.ReadPassword(int(os.Stdin.Fd()))
-		fmt.Println()
-
+		err := form.Run()
 		if err != nil {
-			return Error("failed to read password", err)
+			return Error("cancelled", nil)
 		}
 
-		if len(password) == 0 {
-			return Error("password cannot be empty", nil)
-		}
+		Info("Authenticating...")
+		// TODO: Add Spinner here later
 
 		if err := Application.Login(
 			cmd.Context(),
 			email,
-			string(password),
+			password,
 		); err != nil {
 			return Error("login failed", err)
 		}
@@ -62,7 +96,7 @@ func init() {
 		"",
 		"Email address",
 	)
-	loginCmd.MarkFlagRequired("email")
+
 
 	rootCmd.AddCommand(loginCmd)
 }

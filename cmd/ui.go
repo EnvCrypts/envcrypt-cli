@@ -5,44 +5,48 @@ import (
 	"os"
 	"text/tabwriter"
 
-	"github.com/fatih/color"
-
+	"github.com/charmbracelet/lipgloss"
 	"github.com/envcrypts/envcrypt-cli/internal/config"
 )
 
 var (
-	successColor = color.New(color.FgGreen, color.Bold)
-	errorColor   = color.New(color.FgRed, color.Bold)
-	warnColor    = color.New(color.FgYellow, color.Bold)
-	infoColor    = color.New(color.FgCyan)
-	mutedColor   = color.New(color.FgHiBlack)
+	// Styles
+	successStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("42")).Bold(true).PaddingLeft(1) // Green
+	errorStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("160")).Bold(true).PaddingLeft(1) // Red
+	warnStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("220")).Bold(true).PaddingLeft(1) // Yellow
+	infoStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("39")).PaddingLeft(1)             // Blue
+	mutedStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("240"))            // Grey
+	revokedStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("160")).Strikethrough(true) // Red Strikethrough
 
-	revokedColor = color.New(color.FgRed, color.CrossedOut)
+	// Icons (No extra padding here as it's on the message)
+	iconCheck = lipgloss.NewStyle().Foreground(lipgloss.Color("42")).Render("✔")
+	iconCross = lipgloss.NewStyle().Foreground(lipgloss.Color("160")).Render("✖")
+	iconWarn  = lipgloss.NewStyle().Foreground(lipgloss.Color("220")).Render("⚠")
+	iconInfo  = lipgloss.NewStyle().Foreground(lipgloss.Color("39")).Render("ℹ")
 )
 
-func init() {
-	if os.Getenv("NO_COLOR") != "" {
-		color.NoColor = true
-	}
-}
-
 func Success(msg string) {
-	successColor.Printf("✔ %s\n", msg)
+	fmt.Printf("%s %s\n", iconCheck, successStyle.Render(msg))
 }
 
 func Error(msg string, err error) error {
+	errMsg := errorStyle.Render(msg)
 	if err != nil {
-		return fmt.Errorf("%s %s: %w", errorColor.Sprint("✖"), msg, err)
+		return fmt.Errorf("%s %s: %w", iconCross, errMsg, err)
 	}
-	return fmt.Errorf("%s %s", errorColor.Sprint("✖"), msg)
+	return fmt.Errorf("%s %s", iconCross, errMsg)
 }
 
 func Warn(msg string) {
-	warnColor.Printf("⚠ %s\n", msg)
+	fmt.Printf("%s %s\n", iconWarn, warnStyle.Render(msg))
 }
 
 func Info(msg string) {
-	infoColor.Printf("ℹ %s\n", msg)
+	fmt.Printf("%s %s\n", iconInfo, infoStyle.Render(msg))
+}
+
+func Spacer() {
+	fmt.Println()
 }
 
 func ConfirmDangerousAction(prompt, expected string) bool {
@@ -57,36 +61,31 @@ func ConfirmDangerousAction(prompt, expected string) bool {
 
 func PrintProjects(projects []config.Project) {
 	if len(projects) == 0 {
-		mutedColor.Println("No projects found.")
+		fmt.Println(mutedStyle.Render("No projects found."))
 		return
 	}
 
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 4, ' ', 0)
 
-	fmt.Fprintln(w, "PROJECT NAME\tROLE")
-	fmt.Fprintln(w, "────────────\t────")
+	// Headers
+	fmt.Fprintln(w, lipgloss.NewStyle().Bold(true).Underline(true).Render("PROJECT NAME\tROLE"))
 
 	for _, p := range projects {
 		name := p.Name
 		role := p.Role
-
+        
 		switch p.Role {
 		case "admin":
-			role = successColor.Sprint("admin")
+			role = successStyle.Render("admin")
 		case "member":
-			role = infoColor.Sprint("member")
+			role = infoStyle.Render("member")
 		default:
-			role = mutedColor.Sprint(p.Role)
+			role = mutedStyle.Render(p.Role)
 		}
 
 		if p.IsRevoked {
-			if color.NoColor {
-				name = name + " [REVOKED]"
-				role = p.Role + " [REVOKED]"
-			} else {
-				name = revokedColor.Sprint(name)
-				role = revokedColor.Sprint(p.Role + " (revoked)")
-			}
+			name = revokedStyle.Render(name)
+			role = revokedStyle.Render(p.Role + " (revoked)")
 		}
 
 		fmt.Fprintf(w, "%s\t%s\n", name, role)

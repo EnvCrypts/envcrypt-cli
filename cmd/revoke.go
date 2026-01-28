@@ -46,7 +46,7 @@ var revokeCmd = &cobra.Command{
 }
 
 func init() {
-	memberCmd.AddCommand(revokeCmd)
+	rootCmd.AddCommand(revokeCmd)
 
 	revokeCmd.Flags().StringVar(
 		&revokeMemberProject,

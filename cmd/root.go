@@ -3,6 +3,7 @@ package cmd
 import (
 	"os"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/envcrypts/envcrypt-cli/internal/app"
 	"github.com/spf13/cobra"
 )
@@ -10,9 +11,21 @@ import (
 var rootCmd = &cobra.Command{
 	Use:   "envcrypt",
 	Short: "Zero-trust, end-to-end encrypted environment variable management.",
-	Long: `EnvCrypt is a zero-trust environment variable manager.
-All secrets are encrypted and decrypted client-side, with immutable versioning, diffs, and rollbacks.
-EnvCrypt enables secure collaboration and CI/CD secret injection without server-side decryption.`,
+	Long: lipgloss.NewStyle().
+		MarginLeft(1).
+		MarginRight(1).
+		Padding(1, 2).
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(lipgloss.Color("63")).
+		Render(
+			lipgloss.JoinVertical(
+				lipgloss.Left,
+				lipgloss.NewStyle().Foreground(lipgloss.Color("63")).Bold(true).Render("EnvCrypt CLI 🛡️"),
+				"",
+				"Zero-trust, end-to-end encrypted environment variable management.",
+				"All secrets are encrypted client-side with immutable versioning.",
+			),
+		),
 }
 
 var Application *app.App

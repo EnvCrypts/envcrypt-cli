@@ -35,10 +35,7 @@ func LoadPrivateKey(user string) ([]byte, error) {
 }
 
 func DeletePrivateKey(user string) error {
-	err := keyring.Delete("envcrypt", user)
-	if err != nil {
-		return err
-	}
+	_ = keyring.Delete("envcrypt", user)
 	return nil
 }
 

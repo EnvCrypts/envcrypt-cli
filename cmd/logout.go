@@ -12,8 +12,7 @@ in-memory keys and clearing local authentication state.
 
 Encrypted environment variables cannot be accessed again without
 re-authenticating.`,
-	SilenceUsage:  true,
-	SilenceErrors: true,
+	SilenceUsage: true,
 
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := Application.Logout(email); err != nil {
