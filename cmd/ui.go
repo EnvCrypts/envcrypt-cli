@@ -2,62 +2,148 @@ package cmd
 
 import (
 	"fmt"
-	"os"
-	"text/tabwriter"
+	"regexp"
+	"strings"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/envcrypts/envcrypt-cli/internal/config"
 )
 
-var (
-	// Styles
-	successStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("42")).Bold(true).PaddingLeft(1) // Green
-	errorStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("160")).Bold(true).PaddingLeft(1) // Red
-	warnStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("220")).Bold(true).PaddingLeft(1) // Yellow
-	infoStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("39")).PaddingLeft(1)             // Blue
-	mutedStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("240"))            // Grey
-	revokedStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("160")).Strikethrough(true) // Red Strikethrough
+//
+// ─── COLUMN WIDTHS (TUNE ONCE) ─────────────────────────────────────────────
+//
 
-	// Icons (No extra padding here as it's on the message)
-	iconCheck = lipgloss.NewStyle().Foreground(lipgloss.Color("42")).Render("✔")
-	iconCross = lipgloss.NewStyle().Foreground(lipgloss.Color("160")).Render("✖")
-	iconWarn  = lipgloss.NewStyle().Foreground(lipgloss.Color("220")).Render("⚠")
-	iconInfo  = lipgloss.NewStyle().Foreground(lipgloss.Color("39")).Render("ℹ")
+const (
+	projectColWidth = 24
+	roleColWidth    = 8
+	statusColWidth  = 8
 )
 
+//
+// ─── STYLES ────────────────────────────────────────────────────────────────
+//
+
+// Semantic colors (calm, not loud)
+var (
+	successStyle = lipgloss.NewStyle().
+		Foreground(lipgloss.Color("42"))
+
+	errorStyle = lipgloss.NewStyle().
+		Foreground(lipgloss.Color("160"))
+
+	warnStyle = lipgloss.NewStyle().
+		Foreground(lipgloss.Color("220"))
+
+	infoStyle = lipgloss.NewStyle().
+		Foreground(lipgloss.Color("39"))
+
+	mutedStyle = lipgloss.NewStyle().
+		Foreground(lipgloss.Color("240"))
+
+	revokedStyle = lipgloss.NewStyle().
+		Foreground(lipgloss.Color("160")).
+		Strikethrough(true)
+
+	headerStyle = lipgloss.NewStyle().
+		Bold(true).
+		Underline(true)
+)
+
+//
+// ─── ICONS ─────────────────────────────────────────────────────────────────
+//
+
+var (
+	iconCheck = lipgloss.NewStyle().
+		Foreground(lipgloss.Color("42")).
+		Render("✔")
+
+	iconCross = lipgloss.NewStyle().
+		Foreground(lipgloss.Color("160")).
+		Render("✖")
+
+	iconWarn = lipgloss.NewStyle().
+		Foreground(lipgloss.Color("220")).
+		Render("⚠")
+
+	iconInfo = lipgloss.NewStyle().
+		Foreground(lipgloss.Color("39")).
+		Render("ℹ")
+)
+
+//
+// ─── BASIC OUTPUT ──────────────────────────────────────────────────────────
+//
+
+func Spacer() {
+	fmt.Println()
+}
+
 func Success(msg string) {
+	Spacer()
 	fmt.Printf("%s %s\n", iconCheck, successStyle.Render(msg))
-}
-
-func Error(msg string, err error) error {
-	errMsg := errorStyle.Render(msg)
-	if err != nil {
-		return fmt.Errorf("%s %s: %w", iconCross, errMsg, err)
-	}
-	return fmt.Errorf("%s %s", iconCross, errMsg)
-}
-
-func Warn(msg string) {
-	fmt.Printf("%s %s\n", iconWarn, warnStyle.Render(msg))
 }
 
 func Info(msg string) {
 	fmt.Printf("%s %s\n", iconInfo, infoStyle.Render(msg))
 }
 
-func Spacer() {
-	fmt.Println()
+func Warn(msg string) {
+	fmt.Printf("%s %s\n", iconWarn, warnStyle.Render(msg))
 }
 
+//
+// ─── ERROR HANDLING ─────────────────────────────────────────────────────────
+//
+
+// Error formats an error for CLI UX.
+// Caller should return this error, not print it.
+func Error(msg string, err error) error {
+	if err != nil {
+		return fmt.Errorf(
+			"%s %s\n  %s",
+			iconCross,
+			errorStyle.Render(msg),
+			mutedStyle.Render("↳ "+err.Error()),
+		)
+	}
+
+	return fmt.Errorf(
+		"%s %s",
+		iconCross,
+		errorStyle.Render(msg),
+	)
+}
+
+//
+// ─── CONFIRMATION ──────────────────────────────────────────────────────────
+//
+
+// ConfirmDangerousAction asks user to type a phrase to continue.
 func ConfirmDangerousAction(prompt, expected string) bool {
+	Spacer()
 	Warn(prompt)
-	fmt.Printf("Type %q to confirm: ", expected)
+
+	fmt.Printf(
+		"%s Type %q to confirm: ",
+		mutedStyle.Render("→"),
+		expected,
+	)
 
 	var input string
 	fmt.Scanln(&input)
 
-	return input == expected
+	if input != expected {
+		Info("Aborted.")
+		return false
+	}
+
+	return true
 }
+
+//
+// ─── TABLE OUTPUT ──────────────────────────────────────────────────────────
+//
 
 func PrintProjects(projects []config.Project) {
 	if len(projects) == 0 {
@@ -65,15 +151,20 @@ func PrintProjects(projects []config.Project) {
 		return
 	}
 
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 4, ' ', 0)
+	// Header
+	fmt.Printf(
+		"%s  %s  %s\n",
+		headerStyle.Render(padRight("PROJECT", projectColWidth)),
+		headerStyle.Render(padRight("ROLE", roleColWidth)),
+		headerStyle.Render(padRight("STATUS", statusColWidth)),
+	)
 
-	// Headers
-	fmt.Fprintln(w, lipgloss.NewStyle().Bold(true).Underline(true).Render("PROJECT NAME\tROLE"))
-
+	// Rows
 	for _, p := range projects {
-		name := p.Name
+		name := truncate(p.Name, projectColWidth)
 		role := p.Role
-        
+		status := "active"
+
 		switch p.Role {
 		case "admin":
 			role = successStyle.Render("admin")
@@ -85,11 +176,50 @@ func PrintProjects(projects []config.Project) {
 
 		if p.IsRevoked {
 			name = revokedStyle.Render(name)
-			role = revokedStyle.Render(p.Role + " (revoked)")
+			status = errorStyle.Render("revoked")
+		} else {
+			status = successStyle.Render("active")
 		}
 
-		fmt.Fprintf(w, "%s\t%s\n", name, role)
+		fmt.Printf(
+			"%s  %s  %s\n",
+			padRight(name, projectColWidth),
+			padRight(role, roleColWidth),
+			padRight(status, statusColWidth),
+		)
 	}
+}
 
-	w.Flush()
+//
+// ─── STRING HELPERS ────────────────────────────────────────────────────────
+//
+
+func truncate(s string, max int) string {
+	if visibleLen(s) <= max {
+		return s
+	}
+	runes := []rune(s)
+	if len(runes) <= max {
+		return s
+	}
+	return string(runes[:max-1]) + "…"
+}
+
+func padRight(s string, width int) string {
+	l := visibleLen(s)
+	if l >= width {
+		return s
+	}
+	return s + strings.Repeat(" ", width-l)
+}
+
+// visibleLen counts characters ignoring ANSI escape sequences
+func visibleLen(s string) int {
+	return len([]rune(stripANSI(s)))
+}
+
+// minimal ANSI stripper (safe for lipgloss)
+func stripANSI(s string) string {
+	re := regexp.MustCompile(`\x1b\[[0-9;]*m`)
+	return re.ReplaceAllString(s, "")
 }
