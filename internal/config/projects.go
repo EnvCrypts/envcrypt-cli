@@ -18,9 +18,10 @@ type ListProjectRequest struct {
 	UserId uuid.UUID `json:"user_id"`
 }
 type Project struct {
-	Id   uuid.UUID `json:"project_id"`
-	Name string    `json:"name"`
-	Role string    `json:"role"`
+	Id        uuid.UUID `json:"project_id"`
+	Name      string    `json:"name"`
+	Role      string    `json:"role"`
+	IsRevoked bool      `json:"is_revoked"`
 }
 
 type ListProjectResponse struct {
@@ -46,6 +47,16 @@ type AddUserToProjectRequest struct {
 	EphemeralPublicKey []byte    `json:"ephemeral_public_key"`
 }
 type AddUserToProjectResponse struct {
+	Message string `json:"message"`
+}
+
+type SetAccessRequest struct {
+	ProjectName string    `json:"project_name"`
+	UserEmail   string    `json:"user_email"`
+	AdminId     uuid.UUID `json:"admin_id"`
+	IsRevoked   bool      `json:"is_revoked"`
+}
+type SetAccessResponse struct {
 	Message string `json:"message"`
 }
 

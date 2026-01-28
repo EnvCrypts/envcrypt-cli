@@ -16,6 +16,8 @@ var (
 	warnColor    = color.New(color.FgYellow, color.Bold)
 	infoColor    = color.New(color.FgCyan)
 	mutedColor   = color.New(color.FgHiBlack)
+
+	revokedColor = color.New(color.FgRed, color.CrossedOut)
 )
 
 func init() {
@@ -65,7 +67,9 @@ func PrintProjects(projects []config.Project) {
 	fmt.Fprintln(w, "────────────\t────")
 
 	for _, p := range projects {
+		name := p.Name
 		role := p.Role
+
 		switch p.Role {
 		case "admin":
 			role = successColor.Sprint("admin")
@@ -75,7 +79,17 @@ func PrintProjects(projects []config.Project) {
 			role = mutedColor.Sprint(p.Role)
 		}
 
-		fmt.Fprintf(w, "%s\t%s\n", p.Name, role)
+		if p.IsRevoked {
+			if color.NoColor {
+				name = name + " [REVOKED]"
+				role = p.Role + " [REVOKED]"
+			} else {
+				name = revokedColor.Sprint(name)
+				role = revokedColor.Sprint(p.Role + " (revoked)")
+			}
+		}
+
+		fmt.Fprintf(w, "%s\t%s\n", name, role)
 	}
 
 	w.Flush()

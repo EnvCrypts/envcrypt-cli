@@ -76,3 +76,47 @@ func (app *App) AddUserToProject(ctx context.Context, memberEmail, projectName, 
 
 	return nil
 }
+
+func (app *App) RevokeAccess(ctx context.Context, projectName, userEmail string) error {
+
+	adminId := viper.GetString("user.id")
+	uid, err := uuid.Parse(adminId)
+	if err != nil || uid == uuid.Nil {
+		return errors.New("user not authenticated")
+	}
+
+	revokeRequest := config.SetAccessRequest{
+		ProjectName: projectName,
+		UserEmail:   userEmail,
+		AdminId:     uid,
+		IsRevoked:   true,
+	}
+
+	var revokeResp config.SetAccessResponse
+	if err := app.HttpClient.Do(ctx, "POST", "/projects/access", revokeRequest, &revokeResp); err != nil {
+		return errors.New("could not revoke access")
+	}
+
+	return nil
+}
+
+func (app *App) GiveAccess(ctx context.Context, projectName, userEmail string) error {
+	adminId := viper.GetString("user.id")
+	uid, err := uuid.Parse(adminId)
+	if err != nil || uid == uuid.Nil {
+		return errors.New("user not authenticated")
+	}
+
+	setAccessRequest := config.SetAccessRequest{
+		ProjectName: projectName,
+		UserEmail:   userEmail,
+		AdminId:     uid,
+		IsRevoked:   false,
+	}
+	var setAccessResp config.SetAccessResponse
+	if err := app.HttpClient.Do(ctx, "POST", "/projects/access", setAccessRequest, &setAccessResp); err != nil {
+		return errors.New("could not set access")
+	}
+
+	return nil
+}
