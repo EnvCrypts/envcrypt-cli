@@ -71,3 +71,12 @@ type GetUserProjectResponse struct {
 	WrapNonce          []byte    `json:"wrap_nonce"`
 	EphemeralPublicKey []byte    `json:"ephemeral_public_key"`
 }
+
+type GetMemberProjectRequest struct {
+	ProjectName string    `json:"project_name"`
+	UserId      uuid.UUID `json:"user_id"`
+}
+
+type GetMemberProjectResponse struct {
+	ProjectId uuid.UUID `json:"project_id"`
+}

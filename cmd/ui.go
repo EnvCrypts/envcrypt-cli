@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
@@ -26,27 +27,27 @@ const (
 // Semantic colors (calm, not loud)
 var (
 	successStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("42"))
+			Foreground(lipgloss.Color("42"))
 
 	errorStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("160"))
+			Foreground(lipgloss.Color("160"))
 
 	warnStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("220"))
+			Foreground(lipgloss.Color("220"))
 
 	infoStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("39"))
+			Foreground(lipgloss.Color("39"))
 
 	mutedStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("240"))
+			Foreground(lipgloss.Color("240"))
 
 	revokedStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("160")).
-		Strikethrough(true)
+			Foreground(lipgloss.Color("160")).
+			Strikethrough(true)
 
 	headerStyle = lipgloss.NewStyle().
-		Bold(true).
-		Underline(true)
+			Bold(true).
+			Underline(true)
 )
 
 //
@@ -55,20 +56,20 @@ var (
 
 var (
 	iconCheck = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("42")).
-		Render("✔")
+			Foreground(lipgloss.Color("42")).
+			Render("✔")
 
 	iconCross = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("160")).
-		Render("✖")
+			Foreground(lipgloss.Color("160")).
+			Render("✖")
 
 	iconWarn = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("220")).
-		Render("⚠")
+			Foreground(lipgloss.Color("220")).
+			Render("⚠")
 
 	iconInfo = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("39")).
-		Render("ℹ")
+			Foreground(lipgloss.Color("39")).
+			Render("ℹ")
 )
 
 //
@@ -222,4 +223,29 @@ func visibleLen(s string) int {
 func stripANSI(s string) string {
 	re := regexp.MustCompile(`\x1b\[[0-9;]*m`)
 	return re.ReplaceAllString(s, "")
+}
+
+func printEnvSummary(env map[string]string) {
+	if len(env) == 0 {
+		Warn("No environment variables found")
+		return
+	}
+
+	keys := make([]string, 0, len(env))
+	for k := range env {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	Info(fmt.Sprintf("Variables (%d):", len(keys)))
+
+	// Don’t spam the terminal
+	const maxShown = 10
+	for i, k := range keys {
+		if i == maxShown {
+			fmt.Printf("  %s\n", mutedStyle.Render("…and more"))
+			break
+		}
+		fmt.Printf("  %s %s\n", mutedStyle.Render("-"), k)
+	}
 }

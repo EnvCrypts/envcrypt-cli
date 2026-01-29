@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"fmt"
-	
+
 	"github.com/charmbracelet/huh"
 	"github.com/spf13/cobra"
 )
@@ -13,16 +13,12 @@ var loginCmd = &cobra.Command{
 	Short: "Authenticate and unlock your EnvCrypt session",
 	Long: `Login unlocks your local encryption keys and authorizes access
 to encrypted environment variables without exposing plaintext secrets.`,
-	SilenceUsage:  true,
-	SilenceErrors: true,
+	SilenceUsage: true,
 
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// Ensure we are in an interactive terminal
-		// (huh handles this check internally mostly, but good to keep)
 
 		var password string
 
-		// If email is not provided via flag, ask for it
 		form := huh.NewForm(
 			huh.NewGroup(
 				huh.NewInput().
@@ -47,8 +43,6 @@ to encrypted environment variables without exposing plaintext secrets.`,
 			),
 		)
 
-		// If email was set by flag, we might want to skip that input?
-		// Huh forms are static. We can build it dynamically.
 		if email != "" {
 			// Only ask for password
 			form = huh.NewForm(
@@ -72,9 +66,6 @@ to encrypted environment variables without exposing plaintext secrets.`,
 			return Error("cancelled", nil)
 		}
 
-		Info("Authenticating...")
-		// TODO: Add Spinner here later
-
 		if err := Application.Login(
 			cmd.Context(),
 			email,
@@ -96,7 +87,6 @@ func init() {
 		"",
 		"Email address",
 	)
-
 
 	rootCmd.AddCommand(loginCmd)
 }
