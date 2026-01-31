@@ -9,12 +9,11 @@ import (
 )
 
 var (
-	addMemberEmail   string
-	addMemberRole    string
-	addMemberProject string
+	addProject string
+	addEmail   string
+	addRole    string
 )
 
-// addCmd represents the project member add command
 var addCmd = &cobra.Command{
 	Use:          "add [project]",
 	Short:        "Add a user to a project",
@@ -23,32 +22,19 @@ var addCmd = &cobra.Command{
 	SilenceUsage: true,
 
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// Resolve project name (arg or flag)
-		projectName := addMemberProject
+		projectName := addProject
 		if projectName == "" && len(args) == 1 {
 			projectName = args[0]
 		}
 
-		// Check if we need to prompts
-		// We prompt if critical info is missing
-		needsPrompt := false
-		if projectName == "" || addMemberEmail == "" {
-			needsPrompt = true
-		}
+		needsPrompt := projectName == "" || addEmail == ""
 
 		if needsPrompt {
-			// Interactive Form
-			var role = addMemberRole
+			role := addRole
 			if role == "" {
 				role = "member"
 			}
 
-			// Build the form
-			// We only ask for what's missing, or everything if we are in "interactive mode" logic
-			// A simple approach: if entered interactive mode, show fields that are empty, or confirm others?
-			// Let's just ask for missing parts.
-
-			// Build the form
 			var fields []huh.Field
 
 			if projectName == "" {
@@ -63,10 +49,10 @@ var addCmd = &cobra.Command{
 					}))
 			}
 
-			if addMemberEmail == "" {
+			if addEmail == "" {
 				fields = append(fields, huh.NewInput().
 					Title("Member Email").
-					Value(&addMemberEmail).
+					Value(&addEmail).
 					Validate(func(str string) error {
 						if str == "" {
 							return fmt.Errorf("email is required")
@@ -75,19 +61,16 @@ var addCmd = &cobra.Command{
 					}))
 			}
 
-			// Always offer Role selection in interactive mode
 			fields = append(fields, huh.NewSelect[string]().
 				Title("Role").
 				Options(
 					huh.NewOption("Member", "member"),
 					huh.NewOption("Admin", "admin"),
 				).
-				Value(&addMemberRole))
+				Value(&addRole))
 
-			group := huh.NewGroup(fields...)
-			form := huh.NewForm(group)
-			err := form.Run()
-			if err != nil {
+			form := huh.NewForm(huh.NewGroup(fields...))
+			if err := form.Run(); err != nil {
 				return Error("cancelled", nil)
 			}
 		}
@@ -95,30 +78,20 @@ var addCmd = &cobra.Command{
 		if projectName == "" {
 			return Error("project name is required", nil)
 		}
-		if addMemberEmail == "" {
+		if addEmail == "" {
 			return Error("email is required", nil)
 		}
 
-		role := strings.ToLower(addMemberRole)
+		role := strings.ToLower(addRole)
 		if role != "admin" && role != "member" {
 			return Error("invalid role (must be admin or member)", nil)
 		}
 
-		if err := Application.AddUserToProject(
-			cmd.Context(),
-			addMemberEmail,
-			projectName,
-			role,
-		); err != nil {
+		if err := Application.AddUserToProject(cmd.Context(), addEmail, projectName, role); err != nil {
 			return Error("failed to add member", err)
 		}
 
-		Success(
-			"Added " + addMemberEmail +
-				" as " + role +
-				" to project " + projectName,
-		)
-
+		Success("Added " + addEmail + " as " + role + " to project " + projectName)
 		return nil
 	},
 }
@@ -126,26 +99,7 @@ var addCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(addCmd)
 
-	addCmd.Flags().StringVar(
-		&addMemberProject,
-		"project",
-		"",
-		"Project name",
-	)
-
-	addCmd.Flags().StringVar(
-		&addMemberEmail,
-		"member-email",
-		"",
-		"Email address of the user to add",
-	)
-
-	addCmd.Flags().StringVar(
-		&addMemberRole,
-		"member-role",
-		"member",
-		"Role to assign (admin, member)",
-	)
-
-
+	addCmd.Flags().StringVar(&addProject, "project", "", "Project name")
+	addCmd.Flags().StringVar(&addEmail, "email", "", "Email address of the user to add")
+	addCmd.Flags().StringVar(&addRole, "role", "member", "Role to assign (admin, member)")
 }

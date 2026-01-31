@@ -7,7 +7,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// loginCmd represents the login command
 var loginCmd = &cobra.Command{
 	Use:   "login",
 	Short: "Authenticate and unlock your EnvCrypt session",
@@ -16,7 +15,6 @@ to encrypted environment variables without exposing plaintext secrets.`,
 	SilenceUsage: true,
 
 	RunE: func(cmd *cobra.Command, args []string) error {
-
 		var password string
 
 		form := huh.NewForm(
@@ -44,7 +42,6 @@ to encrypted environment variables without exposing plaintext secrets.`,
 		)
 
 		if email != "" {
-			// Only ask for password
 			form = huh.NewForm(
 				huh.NewGroup(
 					huh.NewInput().
@@ -61,16 +58,11 @@ to encrypted environment variables without exposing plaintext secrets.`,
 			)
 		}
 
-		err := form.Run()
-		if err != nil {
+		if err := form.Run(); err != nil {
 			return Error("cancelled", nil)
 		}
 
-		if err := Application.Login(
-			cmd.Context(),
-			email,
-			password,
-		); err != nil {
+		if err := Application.Login(cmd.Context(), email, password); err != nil {
 			return Error("login failed", err)
 		}
 
@@ -80,13 +72,7 @@ to encrypted environment variables without exposing plaintext secrets.`,
 }
 
 func init() {
-	loginCmd.Flags().StringVarP(
-		&email,
-		"email",
-		"e",
-		"",
-		"Email address",
-	)
-
 	rootCmd.AddCommand(loginCmd)
+
+	loginCmd.Flags().StringVarP(&email, "email", "e", "", "Email address")
 }

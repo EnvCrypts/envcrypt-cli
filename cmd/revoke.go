@@ -1,15 +1,12 @@
 package cmd
 
-import (
-	"github.com/spf13/cobra"
-)
+import "github.com/spf13/cobra"
 
 var (
-	revokeMemberEmail   string
-	revokeMemberProject string
+	revokeProject string
+	revokeEmail   string
 )
 
-// revokeCmd represents the project member revoke command
 var revokeCmd = &cobra.Command{
 	Use:          "revoke [project]",
 	Short:        "Revoke a user's access to a project",
@@ -18,8 +15,7 @@ var revokeCmd = &cobra.Command{
 	SilenceUsage: true,
 
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// Resolve project name
-		projectName := revokeMemberProject
+		projectName := revokeProject
 		if projectName == "" && len(args) == 1 {
 			projectName = args[0]
 		}
@@ -28,19 +24,11 @@ var revokeCmd = &cobra.Command{
 			return Error("project name is required", nil)
 		}
 
-		if err := Application.RevokeAccess(
-			cmd.Context(),
-			projectName,
-			revokeMemberEmail,
-		); err != nil {
+		if err := Application.RevokeAccess(cmd.Context(), projectName, revokeEmail); err != nil {
 			return Error("failed to revoke access", err)
 		}
 
-		Success(
-			"Revoked access for " + revokeMemberEmail +
-				" on project " + projectName,
-		)
-
+		Success("Revoked access for " + revokeEmail + " on project " + projectName)
 		return nil
 	},
 }
@@ -48,19 +36,7 @@ var revokeCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(revokeCmd)
 
-	revokeCmd.Flags().StringVar(
-		&revokeMemberProject,
-		"project",
-		"",
-		"Project name",
-	)
-
-	revokeCmd.Flags().StringVar(
-		&revokeMemberEmail,
-		"member-email",
-		"",
-		"Email address of the user",
-	)
-
-	revokeCmd.MarkFlagRequired("member-email")
+	revokeCmd.Flags().StringVar(&revokeProject, "project", "", "Project name")
+	revokeCmd.Flags().StringVar(&revokeEmail, "email", "", "Email address of the user")
+	revokeCmd.MarkFlagRequired("email")
 }

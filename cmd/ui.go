@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"bufio"
 	"fmt"
+	"os"
 	"regexp"
 	"sort"
 	"strings"
@@ -120,7 +122,6 @@ func Error(msg string, err error) error {
 // ─── CONFIRMATION ──────────────────────────────────────────────────────────
 //
 
-// ConfirmDangerousAction asks user to type a phrase to continue.
 func ConfirmDangerousAction(prompt, expected string) bool {
 	Spacer()
 	Warn(prompt)
@@ -131,8 +132,9 @@ func ConfirmDangerousAction(prompt, expected string) bool {
 		expected,
 	)
 
-	var input string
-	fmt.Scanln(&input)
+	reader := bufio.NewReader(os.Stdin)
+	input, _ := reader.ReadString('\n')
+	input = strings.TrimSpace(input)
 
 	if input != expected {
 		Info("Aborted.")
@@ -140,6 +142,18 @@ func ConfirmDangerousAction(prompt, expected string) bool {
 	}
 
 	return true
+}
+
+// ConfirmOverwrite prompts for a simple y/n confirmation
+func ConfirmOverwrite(path string) bool {
+	Warn(fmt.Sprintf("File %q already exists. Overwrite?", path))
+	fmt.Printf("%s [y/N]: ", mutedStyle.Render("→"))
+
+	reader := bufio.NewReader(os.Stdin)
+	input, _ := reader.ReadString('\n')
+	input = strings.ToLower(strings.TrimSpace(input))
+
+	return input == "y" || input == "yes"
 }
 
 //

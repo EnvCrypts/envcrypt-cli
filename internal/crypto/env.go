@@ -19,6 +19,13 @@ func ParseEnv(raw []byte) (map[string]string, error) {
 
 	return env, nil
 }
+func EncodeEnv(env map[string]string) ([]byte, error) {
+	s, err := godotenv.Marshal(env)
+	if err != nil {
+		return nil, err
+	}
+	return []byte(s), nil
+}
 
 func NormalizeEnv(env map[string]string) []byte {
 	keys := make([]string, 0, len(env))
@@ -84,7 +91,7 @@ func PrepareEnvForRollback(env map[string]string) ([]byte, error) {
 	return compressed, nil
 }
 
-func ReadEnvFromStorage(data []byte) (map[string]string, error) {
+func ReadCompressedEnv(data []byte) (map[string]string, error) {
 	decompressed, err := DecompressEnv(data)
 	if err != nil {
 		return nil, errors.New("could not decompress env")

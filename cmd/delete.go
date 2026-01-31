@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var force bool
+var deleteForce bool
 
 var deleteCmd = &cobra.Command{
 	Use:           "delete <project>",
@@ -19,15 +19,11 @@ var deleteCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		projectName := args[0]
 
-		if !force {
+		if !deleteForce {
 			ok := ConfirmDangerousAction(
-				fmt.Sprintf(
-					"This will permanently delete project %q.",
-					projectName,
-				),
+				fmt.Sprintf("This will permanently delete project %q.", projectName),
 				projectName,
 			)
-
 			if !ok {
 				Info("Aborted.")
 				return nil
@@ -35,10 +31,7 @@ var deleteCmd = &cobra.Command{
 		}
 
 		if err := Application.DeleteProject(cmd.Context(), projectName); err != nil {
-			return Error(
-				fmt.Sprintf("failed to delete project %q", projectName),
-				err,
-			)
+			return Error(fmt.Sprintf("failed to delete project %q", projectName), err)
 		}
 
 		Success(fmt.Sprintf("Project %q deleted", projectName))
@@ -49,10 +42,5 @@ var deleteCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(deleteCmd)
 
-	deleteCmd.Flags().BoolVar(
-		&force,
-		"force",
-		false,
-		"Delete without confirmation",
-	)
+	deleteCmd.Flags().BoolVar(&deleteForce, "force", false, "Delete without confirmation")
 }

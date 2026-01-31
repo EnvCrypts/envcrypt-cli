@@ -8,9 +8,7 @@ import (
 	"golang.org/x/term"
 )
 
-var (
-	email string
-)
+var email string
 
 var registerCmd = &cobra.Command{
 	Use:   "register",
@@ -28,8 +26,7 @@ it with your EnvCrypt account using end-to-end encryption.`,
 			return Error("Failed to read password", err)
 		}
 
-		err = Application.Register(cmd.Context(), email, string(password))
-		if err != nil {
+		if err := Application.Register(cmd.Context(), email, string(password)); err != nil {
 			return Error("Registration failed", err)
 		}
 
@@ -39,8 +36,8 @@ it with your EnvCrypt account using end-to-end encryption.`,
 }
 
 func init() {
+	rootCmd.AddCommand(registerCmd)
+
 	registerCmd.Flags().StringVarP(&email, "email", "e", "", "Email address")
 	registerCmd.MarkFlagRequired("email")
-
-	rootCmd.AddCommand(registerCmd)
 }

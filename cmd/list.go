@@ -1,10 +1,7 @@
 package cmd
 
-import (
-	"github.com/spf13/cobra"
-)
+import "github.com/spf13/cobra"
 
-// listCmd represents the project list command
 var listCmd = &cobra.Command{
 	Use:          "list",
 	Short:        "List projects",
@@ -12,14 +9,12 @@ var listCmd = &cobra.Command{
 	SilenceUsage: true,
 
 	RunE: func(cmd *cobra.Command, args []string) error {
-
 		projectResp, err := Application.ListProjects(cmd.Context())
 		if err != nil {
 			return err
 		}
 
 		PrintProjects(projectResp.Projects)
-
 		return nil
 	},
 }

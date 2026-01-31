@@ -1,15 +1,12 @@
 package cmd
 
-import (
-	"github.com/spf13/cobra"
-)
+import "github.com/spf13/cobra"
 
 var (
-	grantMemberEmail   string
-	grantMemberProject string
+	grantProject string
+	grantEmail   string
 )
 
-// grantCmd represents the project member grant command
 var grantCmd = &cobra.Command{
 	Use:          "grant [project]",
 	Short:        "Grant a user's access to a project",
@@ -18,8 +15,7 @@ var grantCmd = &cobra.Command{
 	SilenceUsage: true,
 
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// Resolve project name (flag > arg)
-		projectName := grantMemberProject
+		projectName := grantProject
 		if projectName == "" && len(args) == 1 {
 			projectName = args[0]
 		}
@@ -28,19 +24,11 @@ var grantCmd = &cobra.Command{
 			return Error("project name is required", nil)
 		}
 
-		if err := Application.GiveAccess(
-			cmd.Context(),
-			projectName,
-			grantMemberEmail,
-		); err != nil {
+		if err := Application.GiveAccess(cmd.Context(), projectName, grantEmail); err != nil {
 			return Error("failed to grant access", err)
 		}
 
-		Success(
-			"Granted access for " + grantMemberEmail +
-				" on project " + projectName,
-		)
-
+		Success("Granted access for " + grantEmail + " on project " + projectName)
 		return nil
 	},
 }
@@ -48,19 +36,7 @@ var grantCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(grantCmd)
 
-	grantCmd.Flags().StringVar(
-		&grantMemberProject,
-		"project",
-		"",
-		"Project name",
-	)
-
-	grantCmd.Flags().StringVar(
-		&grantMemberEmail,
-		"member-email",
-		"",
-		"Email address of the user",
-	)
-
-	grantCmd.MarkFlagRequired("member-email")
+	grantCmd.Flags().StringVar(&grantProject, "project", "", "Project name")
+	grantCmd.Flags().StringVar(&grantEmail, "email", "", "Email address of the user")
+	grantCmd.MarkFlagRequired("email")
 }

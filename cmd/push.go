@@ -14,7 +14,6 @@ var (
 	pushEnvFile string
 )
 
-// pushCmd represents the push command
 var pushCmd = &cobra.Command{
 	Use:          "push [project]",
 	Short:        "Encrypt and upload environment variables",
@@ -23,7 +22,6 @@ var pushCmd = &cobra.Command{
 	SilenceUsage: true,
 
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// Resolve project
 		projectName := pushProject
 		if projectName == "" && len(args) == 1 {
 			projectName = args[0]
@@ -32,13 +30,11 @@ var pushCmd = &cobra.Command{
 			return Error("project name is required", nil)
 		}
 
-		// Resolve env name
 		envName := pushEnvName
 		if envName == "" {
 			envName = "dev"
 		}
 
-		// Resolve env file
 		envPath, err := resolveEnvFile(pushEnvFile)
 		if err != nil {
 			return Error("failed to load env file", err)
@@ -47,7 +43,6 @@ var pushCmd = &cobra.Command{
 		Info("Loaded " + envPath)
 		Info("Environment: " + envName)
 
-		// Read env file
 		fileData, err := os.ReadFile(envPath)
 		if err != nil {
 			return Error("failed to read env file", mapEnvReadError(envPath, err))
@@ -65,7 +60,6 @@ var pushCmd = &cobra.Command{
 		}
 		printEnvSummary(envMap)
 
-		// Push to app layer
 		if err := Application.PushEnv(
 			cmd.Context(),
 			projectName,
@@ -90,25 +84,7 @@ var pushCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(pushCmd)
 
-	pushCmd.Flags().StringVar(
-		&pushProject,
-		"project",
-		"",
-		"Project name",
-	)
-
-	pushCmd.Flags().StringVar(
-		&pushEnvName,
-		"env",
-		"dev",
-		"Environment name (dev, staging, prod)",
-	)
-
-	pushCmd.Flags().StringVarP(
-		&pushEnvFile,
-		"env-file",
-		"e",
-		"",
-		"Path to .env file (default: ./.env)",
-	)
+	pushCmd.Flags().StringVar(&pushProject, "project", "", "Project name")
+	pushCmd.Flags().StringVar(&pushEnvName, "env", "dev", "Environment name (dev, staging, prod)")
+	pushCmd.Flags().StringVarP(&pushEnvFile, "env-file", "e", "", "Path to .env file (default: ./.env)")
 }
