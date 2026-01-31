@@ -40,21 +40,10 @@ func (app *App) PushEnv(ctx context.Context, projectName, envName string, envMap
 		return err
 	}
 
-	// Getting Wrapped Keys
-	keyRequest := config.GetUserProjectRequest{
-		ProjectName: projectName,
-		UserId:      uid,
-	}
-
-	var keyResponse config.GetUserProjectResponse
-	if err := app.HttpClient.Do(ctx, "POST", "/projects/keys", keyRequest, &keyResponse); err != nil {
-		return errors.New("could not get project keys")
-	}
-
 	wrappedKey := &cryptoutils.WrappedKey{
-		WrappedPMK:       keyResponse.WrappedPMK,
-		WrapNonce:        keyResponse.WrapNonce,
-		WrapEphemeralPub: keyResponse.EphemeralPublicKey,
+		WrappedPMK:       projectResponse.WrappedPMK,
+		WrapNonce:        projectResponse.WrapNonce,
+		WrapEphemeralPub: projectResponse.EphemeralPublicKey,
 	}
 
 	data, err := cryptoutils.PrepareEnvForStorage(envMap)
