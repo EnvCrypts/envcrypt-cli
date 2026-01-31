@@ -135,13 +135,13 @@ func (app *App) PullEnv(ctx context.Context, projectName, envName string) (map[s
 	}
 
 	// Getting Wrapped Keys
-	keyRequest := config.GetUserProjectRequest{
+	keyRequest := config.GetMemberProjectRequest{
 		ProjectName: projectName,
 		UserId:      uid,
 	}
 
-	var keyResponse config.GetUserProjectResponse
-	if err := app.HttpClient.Do(ctx, "POST", "/projects/keys", keyRequest, &keyResponse); err != nil {
+	var keyResponse config.GetMemberProjectResponse
+	if err := app.HttpClient.Do(ctx, "POST", "/projects/get", keyRequest, &keyResponse); err != nil {
 		return nil, errors.New("could not get project keys")
 	}
 

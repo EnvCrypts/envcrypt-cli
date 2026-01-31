@@ -78,5 +78,8 @@ type GetMemberProjectRequest struct {
 }
 
 type GetMemberProjectResponse struct {
-	ProjectId uuid.UUID `json:"project_id"`
+	ProjectId          uuid.UUID `json:"project_id"`
+	WrappedPMK         []byte    `json:"wrapped_pmk"`
+	WrapNonce          []byte    `json:"wrap_nonce"`
+	EphemeralPublicKey []byte    `json:"ephemeral_public_key"`
 }
