@@ -234,3 +234,60 @@ func (app *App) PullAllEnv(ctx context.Context, projectName, envName string) ([]
 
 	return envs, nil
 }
+
+func (app *App) RollbackEnv(ctx context.Context, projectName, envName string, version *int32) error {
+
+	// Getting Local Information
+	userEmail, userId := viper.GetString("user.email"), viper.GetString("user.id")
+	if userEmail == "" || userId == "" {
+		return errors.New("missing user email or user id")
+	}
+
+	uid, err := uuid.Parse(userId)
+	if err != nil {
+		return err
+	}
+
+	// Get Project ID
+	projectRequest := config.GetMemberProjectRequest{
+		ProjectName: projectName,
+		UserId:      uid,
+	}
+	var projectResponse config.GetMemberProjectResponse
+	err = app.HttpClient.Do(ctx, "POST", "/projects/get", projectRequest, &projectResponse)
+	if err != nil {
+		return err
+	}
+
+	// Get the ENV for rollback
+	envRequest := config.GetEnvRequest{
+		ProjectId: projectResponse.ProjectId,
+		Email:     userEmail,
+		EnvName:   envName,
+		Version:   version,
+	}
+	var envResponse config.GetEnvResponse
+	err = app.HttpClient.Do(ctx, "POST", "/env/search", envRequest, &envResponse)
+	if err != nil {
+		return err
+	}
+
+	// Push the rollback env
+	metadata := config.Metadata{
+		Type: "env_rollback",
+	}
+	createRequest := config.AddEnvRequest{
+		ProjectId:  projectResponse.ProjectId,
+		UserId:     uid,
+		EnvName:    envName,
+		CipherText: envResponse.CipherText,
+		Nonce:      envResponse.Nonce,
+		Metadata:   metadata,
+	}
+	var createResponse config.AddEnvResponse
+	if err := app.HttpClient.Do(ctx, "POST", "/env/create", createRequest, &createResponse); err != nil {
+		return err
+	}
+
+	return nil
+}
