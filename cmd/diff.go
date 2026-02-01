@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/charmbracelet/huh"
-	"github.com/charmbracelet/lipgloss"
 	cryptoutils "github.com/envcrypts/envcrypt-cli/internal/crypto"
 	"github.com/spf13/cobra"
 )
