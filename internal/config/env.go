@@ -32,3 +32,20 @@ type GetEnvResponse struct {
 	CipherText []byte `json:"cipher_text"`
 	Nonce      []byte `json:"nonce"`
 }
+
+type GetEnvVersionsRequest struct {
+	ProjectId uuid.UUID `json:"project_id"`
+	Email     string    `json:"user_email"`
+
+	EnvName string `json:"env_name"`
+}
+
+type EnvResponse struct {
+	CipherText []byte   `json:"cipher_text"`
+	Nonce      []byte   `json:"nonce"`
+	Version    int32    `json:"version"`
+	Metadata   Metadata `json:"metadata"`
+}
+type GetEnvVersionsResponse struct {
+	EnvVersions []EnvResponse `json:"env_versions"`
+}

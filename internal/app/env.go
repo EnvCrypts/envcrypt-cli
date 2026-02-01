@@ -157,3 +157,80 @@ func (app *App) PullEnv(ctx context.Context, projectName, envName string) (map[s
 
 	return envMap, nil
 }
+
+type DecryptedEnvVersion struct {
+	Version  int32
+	Metadata config.Metadata
+	Env      map[string]string
+}
+
+func (app *App) PullAllEnv(ctx context.Context, projectName, envName string) ([]DecryptedEnvVersion, error) {
+
+	userEmail, userId := viper.GetString("user.email"), viper.GetString("user.id")
+	if userEmail == "" || userId == "" {
+		return nil, errors.New("missing user email or user id")
+	}
+	uid, err := uuid.Parse(userId)
+	if err != nil {
+		return nil, err
+	}
+
+	userPriv, err := cryptoutils.LoadPrivateKey(userEmail)
+	if err != nil {
+		return nil, err
+	}
+
+	projectRequest := config.GetMemberProjectRequest{
+		ProjectName: projectName,
+		UserId:      uid,
+	}
+	var projectResponse config.GetMemberProjectResponse
+	err = app.HttpClient.Do(ctx, "POST", "/projects/get", projectRequest, &projectResponse)
+	if err != nil {
+		return nil, err
+	}
+
+	wrappedKey := &cryptoutils.WrappedKey{
+		WrappedPMK:       projectResponse.WrappedPMK,
+		WrapNonce:        projectResponse.WrapNonce,
+		WrapEphemeralPub: projectResponse.EphemeralPublicKey,
+	}
+
+	envRequest := config.GetEnvVersionsRequest{
+		ProjectId: projectResponse.ProjectId,
+		EnvName:   envName,
+		Email:     userEmail,
+	}
+	var envResponse config.GetEnvVersionsResponse
+	err = app.HttpClient.Do(ctx, "POST", "/env/search/all", envRequest, &envResponse)
+	if err != nil {
+		return nil, err
+	}
+
+	pmk, err := cryptoutils.UnwrapPMK(wrappedKey, userPriv)
+	if err != nil {
+		return nil, errors.New("could not unwrap private key")
+	}
+
+	envs := make([]DecryptedEnvVersion, len(envResponse.EnvVersions))
+
+	for i, ver := range envResponse.EnvVersions {
+		envMapBytes, err := cryptoutils.DecryptENV(pmk, ver.CipherText, ver.Nonce)
+		if err != nil {
+			return nil, errors.New("could not decrypt data")
+		}
+
+		envMap, err := cryptoutils.ReadCompressedEnv(envMapBytes)
+		if err != nil {
+			return nil, errors.New("could not parse environment variables")
+		}
+
+		envs[i] = DecryptedEnvVersion{
+			Version:  ver.Version,
+			Metadata: ver.Metadata,
+			Env:      envMap,
+		}
+	}
+
+	return envs, nil
+}

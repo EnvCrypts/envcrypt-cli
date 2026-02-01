@@ -10,6 +10,7 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/envcrypts/envcrypt-cli/internal/config"
+	cryptoutils "github.com/envcrypts/envcrypt-cli/internal/crypto"
 )
 
 //
@@ -29,27 +30,27 @@ const (
 // Semantic colors (calm, not loud)
 var (
 	successStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("42"))
+		Foreground(lipgloss.Color("42"))
 
 	errorStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("160"))
+		Foreground(lipgloss.Color("160"))
 
 	warnStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("220"))
+		Foreground(lipgloss.Color("220"))
 
 	infoStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("39"))
+		Foreground(lipgloss.Color("39"))
 
 	mutedStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("240"))
+		Foreground(lipgloss.Color("240"))
 
 	revokedStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("160")).
-			Strikethrough(true)
+		Foreground(lipgloss.Color("160")).
+		Strikethrough(true)
 
 	headerStyle = lipgloss.NewStyle().
-			Bold(true).
-			Underline(true)
+		Bold(true).
+		Underline(true)
 )
 
 //
@@ -58,20 +59,20 @@ var (
 
 var (
 	iconCheck = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("42")).
-			Render("✔")
+		Foreground(lipgloss.Color("42")).
+		Render("✔")
 
 	iconCross = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("160")).
-			Render("✖")
+		Foreground(lipgloss.Color("160")).
+		Render("✖")
 
 	iconWarn = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("220")).
-			Render("⚠")
+		Foreground(lipgloss.Color("220")).
+		Render("⚠")
 
 	iconInfo = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("39")).
-			Render("ℹ")
+		Foreground(lipgloss.Color("39")).
+		Render("ℹ")
 )
 
 //
@@ -261,5 +262,40 @@ func printEnvSummary(env map[string]string) {
 			break
 		}
 		fmt.Printf("  %s %s\n", mutedStyle.Render("-"), k)
+	}
+}
+
+func renderDiff(diff cryptoutils.DiffingResult, oldMap, newMap map[string]string, showSecrets bool) {
+	if len(diff.Added) == 0 && len(diff.Removed) == 0 && len(diff.Modified) == 0 {
+		fmt.Println("No changes detected.")
+		return
+	}
+
+	// Helper to mask values
+	mask := func(val string) string {
+		if showSecrets {
+			return val
+		}
+		return "********"
+	}
+
+	// Styles
+	addedStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("42"))     // Green
+	removedStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("160"))  // Red
+	modifiedStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("214")) // Orange/Yellow
+
+	// Print Added
+	for _, key := range diff.Added {
+		fmt.Println(addedStyle.Render(fmt.Sprintf("+ %s=%s", key, mask(newMap[key]))))
+	}
+
+	// Print Removed
+	for _, key := range diff.Removed {
+		fmt.Println(removedStyle.Render(fmt.Sprintf("- %s=%s", key, mask(oldMap[key]))))
+	}
+
+	// Print Modified
+	for _, key := range diff.Modified {
+		fmt.Println(modifiedStyle.Render(fmt.Sprintf("~ %s: %s -> %s", key, mask(oldMap[key]), mask(newMap[key]))))
 	}
 }
