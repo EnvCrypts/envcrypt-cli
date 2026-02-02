@@ -28,15 +28,21 @@ import (
 	"github.com/envcrypts/envcrypt-cli/cmd"
 	"github.com/envcrypts/envcrypt-cli/internal/app"
 	"github.com/envcrypts/envcrypt-cli/internal/config"
+	"github.com/spf13/viper"
 )
 
 func main() {
-	
+
 	if err := config.Load(); err != nil {
 		fmt.Println("Failed to load config:", err)
 		os.Exit(1)
 	}
 
-	a := app.NewApp("http://localhost:8080")
+	serverUrl := viper.GetString("api.base_url")
+	if serverUrl == "" {
+		serverUrl = "http://localhost:8081"
+	}
+
+	a := app.NewApp(serverUrl)
 	cmd.Execute(a)
 }

@@ -3,7 +3,6 @@ package config
 import (
 	"os"
 	"path/filepath"
-
 	"github.com/spf13/viper"
 )
 
@@ -24,7 +23,7 @@ func Load() error {
 	viper.AddConfigPath(appDir)
 
 	// Defaults
-	viper.SetDefault("api.base_url", "https://api.envcrypt.dev")
+	viper.SetDefault("api.base_url", "https://api-envcrypt.vijayvenkatj.in")
 
 	// Allow ENV override (ENVCRYPT_USER_EMAIL, etc.)
 	viper.SetEnvPrefix("envcrypt")
