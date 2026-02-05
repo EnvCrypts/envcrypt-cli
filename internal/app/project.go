@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"errors"
+	"log"
 
 	"github.com/envcrypts/envcrypt-cli/internal/config"
 	cryptoutils "github.com/envcrypts/envcrypt-cli/internal/crypto"
@@ -69,6 +70,8 @@ func (app *App) ListProjects(ctx context.Context) (*config.ListProjectResponse, 
 
 	var projectsRes config.ListProjectResponse
 	if err := app.HttpClient.Do(ctx, "POST", "/projects/list", projectsReq, &projectsRes); err != nil {
+		log.Print(projectsRes)
+		log.Print(err)
 		return nil, err
 	}
 
