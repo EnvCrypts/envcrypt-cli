@@ -242,3 +242,21 @@ func PrintServiceRoleSecret(keyPair *config.ServiceRoleKeyPair) {
 
 	fmt.Println(boxStyle.Render(lipgloss.NewStyle().Foreground(lipgloss.Color("2")).Render(content)))
 }
+
+func PrintServiceRoleDetail(role *config.ServiceRole) {
+	Info(fmt.Sprintf("Service Role: %s", role.Name))
+	
+	fmt.Printf("  %s %s\n", headerStyle.Render("ID:"), role.ID)
+	fmt.Printf("  %s %s\n", headerStyle.Render("Repo:"), role.RepoPrincipal)
+	fmt.Printf("  %s %s\n", headerStyle.Render("Created By:"), role.CreatedBy)
+	fmt.Printf("  %s %s\n", headerStyle.Render("Created At:"), role.CreatedAt.Format("2006-01-02 15:04:05"))
+}
+
+func PrintServiceRolePermissions(perm *config.ServiceRolePermsResponse, repoPrincipal string) {
+	Info(fmt.Sprintf("Permissions for %s", repoPrincipal))
+
+	fmt.Printf("  %s %s\n", headerStyle.Render("Project:"), perm.ProjectName)
+	fmt.Printf("  %s %s\n", headerStyle.Render("Env:"), perm.Env)
+}
+
+

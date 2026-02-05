@@ -18,13 +18,31 @@ Example:
     --project billing-service \
     --env prod`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		role, _ := cmd.Flags().GetString("service-role")
+		roleName, _ := cmd.Flags().GetString("service-role")
 		project, _ := cmd.Flags().GetString("project")
 		env, _ := cmd.Flags().GetString("env")
 
-		// Logic to grant permissions would go here
+		if project == "" {
+			projectsResp, err := Application.ListProjects(cmd.Context())
+			if err != nil {
+				return err
+			}
 
-		Success(fmt.Sprintf("Granted access to %q for service role %q on env %q", project, role, env))
+			PrintProjects(projectsResp.Projects)
+			fmt.Print("Enter project name: ")
+			fmt.Scanln(&project)
+		}
+
+		if env == "" {
+			fmt.Print("Enter environment (e.g., prod, dev): ")
+			fmt.Scanln(&env)
+		}
+		
+		if err := Application.DelegateAccess(cmd.Context(), roleName, project, env); err != nil {
+			return err
+		}
+
+		Success(fmt.Sprintf("Granted access to %q for service role %q on env %q", project, roleName, env))
 		return nil
 	},
 }
@@ -34,7 +52,5 @@ func init() {
 	serviceRoleGrantCmd.Flags().String("project", "", "Project name (required)")
 	serviceRoleGrantCmd.Flags().String("env", "", "Environment name (required)")
 	serviceRoleGrantCmd.MarkFlagRequired("service-role")
-	serviceRoleGrantCmd.MarkFlagRequired("project")
-	serviceRoleGrantCmd.MarkFlagRequired("env")
 	serviceRoleCmd.AddCommand(serviceRoleGrantCmd)
 }

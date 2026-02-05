@@ -62,3 +62,107 @@ func (app *App) CreateServiceRole(ctx context.Context, name, repoPrincipal strin
 
 	return keypair, nil
 }
+
+func (app *App) GetServiceRole(ctx context.Context, repoPrincipal string) (*config.ServiceRole, error) {
+	var requestBody = config.ServiceRoleGetRequest{
+		RepoPrincipal: repoPrincipal,
+	}
+
+	var responseBody config.ServiceRoleGetResponse
+	err := app.HttpClient.Do(ctx, "POST", "/service_role/get", requestBody, &responseBody)
+	if err != nil {
+		return nil, err
+	}
+
+	return &responseBody.ServiceRole, nil
+}
+
+func (app *App) DeleteServiceRole(ctx context.Context, serviceRoleId uuid.UUID) error {
+	var requestBody = config.ServiceRoleDeleteRequest{
+		ServiceRoleId: serviceRoleId,
+	}
+	var responseBody config.ServiceRoleDeleteResponse
+	err := app.HttpClient.Do(ctx, "POST", "/service_role/delete", requestBody, &responseBody)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (app *App) GetPermissions(ctx context.Context, repoPrincipal string) (*config.ServiceRolePermsResponse, error) {
+	var requestBody = config.ServiceRolePermsRequest{
+		RepoPrincipal: repoPrincipal,
+	}
+
+	var responseBody config.ServiceRolePermsResponse
+	err := app.HttpClient.Do(ctx, "POST", "/service_role/perms", requestBody, &responseBody)
+	if err != nil {
+		return nil, err
+	}
+	return &responseBody, nil
+}
+
+func (app *App) DelegateAccess(ctx context.Context, repoPrincipal, projectName, env string) error {
+	adminEmail, adminId := viper.GetString("user.email"), viper.GetString("user.id")
+	uid, err := uuid.Parse(adminId)
+	if err != nil || uid == uuid.Nil {
+		return errors.New("user not authenticated")
+	}
+
+	// 1. Get Project Keys to get WrappedPMK
+	projectReq := config.GetUserProjectRequest{
+		ProjectName: projectName,
+		UserId:      uid,
+	}
+
+	var projectResp config.GetUserProjectResponse
+	if err := app.HttpClient.Do(ctx, "POST", "/projects/keys", projectReq, &projectResp); err != nil {
+		return errors.New("could not get project keys")
+	}
+
+	wrappedKey := &cryptoutils.WrappedKey{
+		WrappedPMK:       projectResp.WrappedPMK,
+		WrapNonce:        projectResp.WrapNonce,
+		WrapEphemeralPub: projectResp.EphemeralPublicKey,
+	}
+	privateKey, err := cryptoutils.LoadPrivateKey(adminEmail)
+	if err != nil {
+		return errors.New("user not authenticated")
+	}
+
+	pmk, err := cryptoutils.UnwrapPMK(wrappedKey, privateKey)
+	if err != nil {
+		return errors.New("forbidden access: cannot unwrap project key")
+	}
+
+	// 2. Get Service Role to get its Public Key and ID
+	role, err := app.GetServiceRole(ctx, repoPrincipal)
+	if err != nil {
+		return err
+	}
+
+	// 3. Wrap PMK for Service Role
+	serviceRoleWrappedKey, err := cryptoutils.WrapPMKForUser(pmk, role.ServiceRolePublicKey)
+	if err != nil {
+		return errors.New("unable to wrap key for service role")
+	}
+
+	// 4. Delegate Access
+	delegateReq := config.ServiceRoleDelegateRequest{
+		RepoPrincipal:      repoPrincipal,
+		ProjectId:          projectResp.ProjectId,
+		EnvName:            env,
+		WrappedPMK:         serviceRoleWrappedKey.WrappedPMK,
+		WrapNonce:          serviceRoleWrappedKey.WrapNonce,
+		EphemeralPublicKey: serviceRoleWrappedKey.WrapEphemeralPub,
+		DelegatedBy:        uid,
+	}
+
+	var delegateResp config.ServiceRoleDelegateResponse
+	if err := app.HttpClient.Do(ctx, "POST", "/service_role/delegate", delegateReq, &delegateResp); err != nil {
+		return err
+	}
+
+	return nil
+}
