@@ -41,7 +41,6 @@ type AddUserToProjectRequest struct {
 	ProjectName        string    `json:"project_name"`
 	AdminId            uuid.UUID `json:"admin_id"`
 	UserId             uuid.UUID `json:"user_id"`
-	Role               string    `json:"role"`
 	WrappedPMK         []byte    `json:"wrapped_pmk"`
 	WrapNonce          []byte    `json:"wrap_nonce"`
 	EphemeralPublicKey []byte    `json:"ephemeral_public_key"`

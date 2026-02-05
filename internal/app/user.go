@@ -10,8 +10,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func (app *App) AddUserToProject(ctx context.Context, memberEmail, projectName, role string) error {
-
+func (app *App) AddUserToProject(ctx context.Context, memberEmail, projectName string) error {
 	adminEmail, adminId := viper.GetString("user.email"), viper.GetString("user.id")
 	uid, err := uuid.Parse(adminId)
 	if err != nil || uid == uuid.Nil {
@@ -63,7 +62,6 @@ func (app *App) AddUserToProject(ctx context.Context, memberEmail, projectName, 
 		ProjectName:        projectName,
 		UserId:             pubKeyResp.UserId,
 		AdminId:            uid,
-		Role:               role,
 		WrappedPMK:         memberWrappedKey.WrappedPMK,
 		WrapNonce:          memberWrappedKey.WrapNonce,
 		EphemeralPublicKey: memberWrappedKey.WrapEphemeralPub,

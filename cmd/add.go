@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"fmt"
-	"strings"
+
 
 	"github.com/charmbracelet/huh"
 	"github.com/spf13/cobra"
@@ -11,13 +11,12 @@ import (
 var (
 	addProject string
 	addEmail   string
-	addRole    string
 )
 
 var addCmd = &cobra.Command{
 	Use:          "add [project]",
 	Short:        "Add a user to a project",
-	Long:         "Add a user to a project and assign them a role.",
+	Long:         "Add a user to a project.",
 	Args:         cobra.MaximumNArgs(1),
 	SilenceUsage: true,
 
@@ -30,11 +29,6 @@ var addCmd = &cobra.Command{
 		needsPrompt := projectName == "" || addEmail == ""
 
 		if needsPrompt {
-			role := addRole
-			if role == "" {
-				role = "member"
-			}
-
 			var fields []huh.Field
 
 			if projectName == "" {
@@ -61,14 +55,6 @@ var addCmd = &cobra.Command{
 					}))
 			}
 
-			fields = append(fields, huh.NewSelect[string]().
-				Title("Role").
-				Options(
-					huh.NewOption("Member", "member"),
-					huh.NewOption("Admin", "admin"),
-				).
-				Value(&addRole))
-
 			form := huh.NewForm(huh.NewGroup(fields...))
 			if err := form.Run(); err != nil {
 				return Error("cancelled", nil)
@@ -82,16 +68,11 @@ var addCmd = &cobra.Command{
 			return Error("email is required", nil)
 		}
 
-		role := strings.ToLower(addRole)
-		if role != "admin" && role != "member" {
-			return Error("invalid role (must be admin or member)", nil)
-		}
-
-		if err := Application.AddUserToProject(cmd.Context(), addEmail, projectName, role); err != nil {
+	if err := Application.AddUserToProject(cmd.Context(), addEmail, projectName); err != nil {
 			return Error("failed to add member", err)
 		}
 
-		Success("Added " + addEmail + " as " + role + " to project " + projectName)
+		Success("Added " + addEmail + " to project " + projectName)
 		return nil
 	},
 }
@@ -101,5 +82,4 @@ func init() {
 
 	addCmd.Flags().StringVar(&addProject, "project", "", "Project name")
 	addCmd.Flags().StringVar(&addEmail, "email", "", "Email address of the user to add")
-	addCmd.Flags().StringVar(&addRole, "role", "member", "Role to assign (admin, member)")
 }
