@@ -129,3 +129,16 @@ func GenerateKeyPair(password string) (*config.KeyPair, error) {
 		EncKey:     *encryptedKey,
 	}, nil
 }
+
+func GenerateServiceRoleKeyPair() (*config.ServiceRoleKeyPair, error) {
+	curve := ecdh.X25519()
+	privateKey, err := curve.GenerateKey(rand.Reader)
+	if err != nil {
+		return nil, err
+	}
+
+	return &config.ServiceRoleKeyPair{
+		PrivateKey: privateKey.Bytes(),
+		PublicKey:  privateKey.PublicKey().Bytes(),
+	}, nil
+}

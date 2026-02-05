@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+
 	"github.com/spf13/cobra"
 )
 
@@ -13,7 +14,7 @@ var serviceRoleRevokeCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		name := args[0]
 		// Logic to revoke service role would go here
-		
+
 		Success(fmt.Sprintf("Service role %q revoked", name))
 		return nil
 	},

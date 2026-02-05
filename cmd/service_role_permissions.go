@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+
 	"github.com/spf13/cobra"
 )
 
@@ -13,7 +14,7 @@ var serviceRolePermissionsCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		name := args[0]
 		// Logic to list permissions would go here
-		
+
 		Info(fmt.Sprintf("Permissions for service role %q:", name))
 		fmt.Printf(
 			"%s  %s\n",

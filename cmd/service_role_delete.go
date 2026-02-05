@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+
 	"github.com/spf13/cobra"
 )
 
@@ -13,7 +14,7 @@ var serviceRoleDeleteCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		name := args[0]
 		// Logic to delete service role would go here
-		
+
 		Success(fmt.Sprintf("Service role %q deleted", name))
 		return nil
 	},

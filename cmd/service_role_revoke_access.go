@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+
 	"github.com/spf13/cobra"
 )
 
@@ -22,7 +23,7 @@ Example:
 		env, _ := cmd.Flags().GetString("env")
 
 		// Logic to revoke access would go here
-		
+
 		Success(fmt.Sprintf("Revoked access to %q from service role %q on env %q", project, role, env))
 		return nil
 	},

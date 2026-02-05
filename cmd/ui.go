@@ -2,7 +2,9 @@ package cmd
 
 import (
 	"bufio"
+	"encoding/base64"
 	"fmt"
+
 	"os"
 	"regexp"
 	"sort"
@@ -196,4 +198,47 @@ func renderDiff(diff cryptoutils.DiffingResult, oldMap, newMap map[string]string
 	for _, key := range diff.Modified {
 		fmt.Println(modifiedStyle.Render(fmt.Sprintf("~ %s: %s → %s", key, mask(oldMap[key]), mask(newMap[key]))))
 	}
+}
+
+func PrintServiceRoles(roles []config.ServiceRole) {
+	if len(roles) == 0 {
+		fmt.Println(mutedStyle.Render("No service roles found."))
+		return
+	}
+
+	fmt.Printf(
+		"%s  %s\n",
+		headerStyle.Render(padRight("NAME", 30)),
+		headerStyle.Render(padRight("REPO PRINCIPAL", 50)),
+	)
+
+	for _, r := range roles {
+		fmt.Printf(
+			"%s  %s\n",
+			padRight(truncate(r.Name, 30), 30),
+			padRight(truncate(r.RepoPrincipal, 50), 50),
+		)
+	}
+}
+
+func PrintServiceRoleSecret(keyPair *config.ServiceRoleKeyPair) {
+	Spacer()
+	Warn("This is a one-time view. Save these credentials securely!")
+	fmt.Println(mutedStyle.Render("These keys allow read/write access to project secrets."))
+
+	pub := base64.StdEncoding.EncodeToString(keyPair.PublicKey)
+	priv := base64.StdEncoding.EncodeToString(keyPair.PrivateKey)
+
+	boxStyle := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(lipgloss.Color("3")).
+		Padding(1).
+		MarginTop(1)
+
+	content := fmt.Sprintf(
+		"ENVCRYPT_SERVICE_ROLE_PUBLIC_KEY=%s\nENVCRYPT_SERVICE_ROLE_PRIVATE_KEY=%s",
+		pub, priv,
+	)
+
+	fmt.Println(boxStyle.Render(lipgloss.NewStyle().Foreground(lipgloss.Color("2")).Render(content)))
 }

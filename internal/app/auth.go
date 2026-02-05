@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 	"errors"
-	"log"
 
 	"github.com/envcrypts/envcrypt-cli/internal/config"
 	cryptoutils "github.com/envcrypts/envcrypt-cli/internal/crypto"
@@ -20,7 +19,6 @@ func (app *App) Login(ctx context.Context, email, password string) error {
 
 	err := app.HttpClient.Do(ctx, "POST", "/users/login", requestBody, &responseBody)
 	if err != nil {
-		log.Print(responseBody)
 		return err
 	}
 

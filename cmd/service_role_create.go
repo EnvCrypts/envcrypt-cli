@@ -1,7 +1,8 @@
 package cmd
 
 import (
-	"fmt"
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
@@ -18,10 +19,14 @@ Example:
 	RunE: func(cmd *cobra.Command, args []string) error {
 		name, _ := cmd.Flags().GetString("name")
 		repo, _ := cmd.Flags().GetString("repo")
-		
-		// Logic to create service role would go here
-		
-		Success(fmt.Sprintf("Service role %q created for repo %q", name, repo))
+
+		keyPair, err := Application.CreateServiceRole(context.Background(), name, repo)
+		if err != nil {
+			return err
+		}
+
+		PrintServiceRoleSecret(keyPair)
+
 		return nil
 	},
 }
