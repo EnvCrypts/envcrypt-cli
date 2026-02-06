@@ -8,12 +8,25 @@ import (
 
 // delete
 var serviceRoleDeleteCmd = &cobra.Command{
-	Use:   "delete <name>",
-	Short: "Delete a service role (rare)",
-	Args:  cobra.ExactArgs(1),
+	Use:          "delete <name>",
+	Short:        "Delete a service role (rare)",
+	Args:         cobra.MaximumNArgs(1),
+	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		repoPrincipal := args[0]
-		
+		var repoPrincipal string
+		if len(args) > 0 {
+			repoPrincipal = args[0]
+		}
+
+		if repoPrincipal == "" {
+			defPrincipal, _, _, _ := DetectGitContext()
+			repoPrincipal = PromptWithDefault("Service Role Principal", defPrincipal)
+		}
+
+		if repoPrincipal == "" {
+			return fmt.Errorf("service role principal is required")
+		}
+
 		role, err := Application.GetServiceRole(cmd.Context(), repoPrincipal)
 		if err != nil {
 			return err

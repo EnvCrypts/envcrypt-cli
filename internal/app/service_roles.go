@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"errors"
+	"log"
 
 	"github.com/envcrypts/envcrypt-cli/internal/config"
 	cryptoutils "github.com/envcrypts/envcrypt-cli/internal/crypto"
@@ -28,6 +29,7 @@ func (app *App) ListServiceRoles(ctx context.Context) ([]config.ServiceRole, err
 	var responseBody config.ServiceRoleListResponse
 	err = app.HttpClient.Do(ctx, "POST", "/service_role/get/all", requestBody, &responseBody)
 	if err != nil {
+		log.Print(err.Error())
 		return nil, err
 	}
 
@@ -55,7 +57,7 @@ func (app *App) CreateServiceRole(ctx context.Context, name, repoPrincipal strin
 	}
 
 	var responseBody config.ServiceRoleCreateResponse
-	err = app.HttpClient.Do(ctx, "POST", "/service_role/create", requestBody, responseBody)
+	err = app.HttpClient.Do(ctx, "POST", "/service_role/create", requestBody, &responseBody)
 	if err != nil {
 		return nil, err
 	}
@@ -78,11 +80,19 @@ func (app *App) GetServiceRole(ctx context.Context, repoPrincipal string) (*conf
 }
 
 func (app *App) DeleteServiceRole(ctx context.Context, serviceRoleId uuid.UUID) error {
+
+	userID := viper.GetString("user.id")
+	uid, err := uuid.Parse(userID)
+	if err != nil {
+		return errors.New("user id not valid")
+	}
+
 	var requestBody = config.ServiceRoleDeleteRequest{
 		ServiceRoleId: serviceRoleId,
+		CreatedBy:     uid,
 	}
 	var responseBody config.ServiceRoleDeleteResponse
-	err := app.HttpClient.Do(ctx, "POST", "/service_role/delete", requestBody, &responseBody)
+	err = app.HttpClient.Do(ctx, "POST", "/service_role/delete", requestBody, &responseBody)
 	if err != nil {
 		return err
 	}

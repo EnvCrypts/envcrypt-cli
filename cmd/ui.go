@@ -259,4 +259,19 @@ func PrintServiceRolePermissions(perm *config.ServiceRolePermsResponse, repoPrin
 	fmt.Printf("  %s %s\n", headerStyle.Render("Env:"), perm.Env)
 }
 
+func PromptWithDefault(label, defaultVal string) string {
+	if defaultVal != "" {
+		fmt.Printf("%s [%s]: ", label, mutedStyle.Render(defaultVal))
+	} else {
+		fmt.Printf("%s: ", label)
+	}
 
+	reader := bufio.NewReader(os.Stdin)
+	input, _ := reader.ReadString('\n')
+	input = strings.TrimSpace(input)
+
+	if input == "" {
+		return defaultVal
+	}
+	return input
+}
