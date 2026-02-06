@@ -11,7 +11,6 @@ import (
 
 var (
 	ciOIDCToken string
-	ciProject   string
 	ciEnv       string
 	ciOutput    string
 )
@@ -24,7 +23,6 @@ var ciLoginCmd = &cobra.Command{
 Example:
   envcrypt ci login \
     --oidc-token $ACTIONS_ID_TOKEN \
-    --project my-app \
     --env prod \
     --output .env`,
 	SilenceUsage: true,
@@ -32,9 +30,6 @@ Example:
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if ciOIDCToken == "" {
 			return Error("--oidc-token is required", nil)
-		}
-		if ciProject == "" {
-			return Error("--project is required", nil)
 		}
 		if ciEnv == "" {
 			return Error("--env is required", nil)
@@ -45,7 +40,6 @@ Example:
 			outputPath = ".env"
 		}
 
-		Info(fmt.Sprintf("Project: %s", ciProject))
 		Info(fmt.Sprintf("Environment: %s", ciEnv))
 
 		sessionID, projectID, err := Application.GetSessionID(cmd.Context(), ciOIDCToken)
@@ -108,7 +102,6 @@ Example:
 
 func init() {
 	ciLoginCmd.Flags().StringVar(&ciOIDCToken, "oidc-token", "", "GitHub OIDC token (required)")
-	ciLoginCmd.Flags().StringVar(&ciProject, "project", "", "Project name (required)")
 	ciLoginCmd.Flags().StringVar(&ciEnv, "env", "", "Environment name: dev|stage|prod (required)")
 	ciLoginCmd.Flags().StringVarP(&ciOutput, "output", "o", "", "Output path for .env file (default: .env)")
 	ciCmd.AddCommand(ciLoginCmd)
