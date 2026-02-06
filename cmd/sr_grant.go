@@ -46,7 +46,7 @@ Example:
 			}
 
 			PrintProjects(adminProjects)
-			fmt.Print("Enter project name: ")
+			fmt.Printf("%s ", mutedStyle.Render("Enter project name:"))
 			fmt.Scanln(&project)
 
 			found := false
@@ -62,7 +62,7 @@ Example:
 		}
 
 		if env == "" {
-			fmt.Print("Enter environment (e.g., prod, dev): ")
+			fmt.Printf("%s ", mutedStyle.Render("Enter environment (e.g., prod, dev):"))
 			fmt.Scanln(&env)
 		}
 

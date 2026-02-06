@@ -30,10 +30,10 @@ var (
 	
 	headerStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("8"))
 	
-	iconCheck = successStyle.Render("✓")
-	iconCross = errorStyle.Render("×")
-	iconWarn  = warnStyle.Render("!")
-	iconInfo  = infoStyle.Render("•")
+	iconCheck = successStyle.Render("[✓]")
+	iconCross = errorStyle.Render("[x]")
+	iconWarn  = warnStyle.Render("[!]")
+	iconInfo  = infoStyle.Render(">")
 )
 
 func Spacer() {

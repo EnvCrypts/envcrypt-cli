@@ -46,7 +46,7 @@ Example:
 			principal = buildRepoPrincipal(repo, branch)
 
 			// Show what we are about to create
-			fmt.Printf("Creating service role for principal: %s\n", principal)
+			Info(fmt.Sprintf("Creating service role for principal: %s", principal))
 
 			// Confirm action
 			if !ConfirmDangerousAction(fmt.Sprintf("Create service role %q?", name), "yes") {
