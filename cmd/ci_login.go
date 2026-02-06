@@ -48,7 +48,7 @@ Example:
 		Info(fmt.Sprintf("Project: %s", ciProject))
 		Info(fmt.Sprintf("Environment: %s", ciEnv))
 
-		sessionID, projectID, err := Application.GetSessionID(cmd.Context(), ciOIDCToken, ciProject, ciEnv)
+		sessionID, projectID, err := Application.GetSessionID(cmd.Context(), ciOIDCToken)
 		if err != nil {
 			return Error("OIDC authentication failed", err)
 		}

@@ -82,3 +82,10 @@ type GetMemberProjectResponse struct {
 	WrapNonce          []byte    `json:"wrap_nonce"`
 	EphemeralPublicKey []byte    `json:"ephemeral_public_key"`
 }
+
+type GetProjectByRepo struct {
+	RepoPrincipal string `json:"repo_principal"`
+}
+type GetProjectByNameResponse struct {
+	ProjectID uuid.UUID `json:"project_id"`
+}
