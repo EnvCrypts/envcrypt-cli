@@ -176,3 +176,19 @@ func (app *App) DelegateAccess(ctx context.Context, repoPrincipal, projectName, 
 
 	return nil
 }
+
+func (app *App) GetServiceRoleProjectKeys(ctx context.Context, projectID, sessionID uuid.UUID, env string) (*config.ServiceRollProjectKeyResponse, error) {
+
+	var requestBody = config.ServiceRollProjectKeyRequest{
+		ProjectID: projectID,
+		Env:       env,
+		SessionID: sessionID,
+	}
+	var responseBody config.ServiceRollProjectKeyResponse
+	err := app.HttpClient.Do(ctx, "POST", "/service_role/project-keys", requestBody, &responseBody)
+	if err != nil {
+		return nil, err
+	}
+
+	return &responseBody, nil
+}

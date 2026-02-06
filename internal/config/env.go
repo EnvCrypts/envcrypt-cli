@@ -49,3 +49,13 @@ type EnvResponse struct {
 type GetEnvVersionsResponse struct {
 	EnvVersions []EnvResponse `json:"env_versions"`
 }
+
+type GetEnvForCIRequest struct {
+	ProjectId uuid.UUID `json:"project_id"`
+	EnvName   string    `json:"env_name"`
+}
+type GetEnvForCIResponse struct {
+	CipherText []byte `json:"cipher_text"`
+	Nonce      []byte `json:"nonce"`
+}
+
