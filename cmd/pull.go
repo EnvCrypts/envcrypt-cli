@@ -60,10 +60,7 @@ var pullCmd = &cobra.Command{
 		}
 
 		if len(envMap) == 0 {
-			return Error(
-				"no environment variables found",
-				fmt.Errorf("environment %q has no variables", envName),
-			)
+			Info(fmt.Sprintf("No environment variables found for %s. Creating empty .env file.", envName))
 		}
 
 		printEnvSummary(envMap)

@@ -81,7 +81,7 @@ Example:
 		}
 
 		if len(envMap) == 0 {
-			return Error("no environment variables found", fmt.Errorf("environment %q has no variables", ciEnv))
+			Info(fmt.Sprintf("No environment variables found for %s. Creating empty .env file.", ciEnv))
 		}
 
 		printEnvSummary(envMap)
