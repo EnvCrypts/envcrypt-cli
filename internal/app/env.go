@@ -35,7 +35,7 @@ func (app *App) PushEnv(ctx context.Context, projectName, envName string, envMap
 	}
 
 	var projectResponse config.GetMemberProjectResponse
-	err = app.HttpClient.Do(ctx, "POST", "/projects/get", projectRequest, &projectResponse)
+	err = app.HttpClient.Do(ctx, "POST", "/projects/get", projectRequest, &projectResponse, true)
 	if err != nil {
 		return err
 	}
@@ -75,7 +75,7 @@ func (app *App) PushEnv(ctx context.Context, projectName, envName string, envMap
 	}
 
 	var createResponse config.AddEnvResponse
-	if err := app.HttpClient.Do(ctx, "POST", "/env/create", createRequest, &createResponse); err != nil {
+	if err := app.HttpClient.Do(ctx, "POST", "/env/create", createRequest, &createResponse, true); err != nil {
 		return err
 	}
 
@@ -105,7 +105,7 @@ func (app *App) PullEnv(ctx context.Context, projectName, envName string) (map[s
 	}
 
 	var projectResponse config.GetMemberProjectResponse
-	err = app.HttpClient.Do(ctx, "POST", "/projects/get", projectRequest, &projectResponse)
+	err = app.HttpClient.Do(ctx, "POST", "/projects/get", projectRequest, &projectResponse, true)
 	if err != nil {
 		return nil, err
 	}
@@ -118,7 +118,7 @@ func (app *App) PullEnv(ctx context.Context, projectName, envName string) (map[s
 	}
 
 	var envResponse config.GetEnvResponse
-	err = app.HttpClient.Do(ctx, "POST", "/env/search", envRequest, &envResponse)
+	err = app.HttpClient.Do(ctx, "POST", "/env/search", envRequest, &envResponse, true)
 	if err != nil {
 		return nil, err
 	}
@@ -130,7 +130,7 @@ func (app *App) PullEnv(ctx context.Context, projectName, envName string) (map[s
 	}
 
 	var keyResponse config.GetMemberProjectResponse
-	if err := app.HttpClient.Do(ctx, "POST", "/projects/get", keyRequest, &keyResponse); err != nil {
+	if err := app.HttpClient.Do(ctx, "POST", "/projects/get", keyRequest, &keyResponse, true); err != nil {
 		return nil, errors.New("could not get project keys")
 	}
 
@@ -185,7 +185,7 @@ func (app *App) PullAllEnv(ctx context.Context, projectName, envName string) ([]
 		UserId:      uid,
 	}
 	var projectResponse config.GetMemberProjectResponse
-	err = app.HttpClient.Do(ctx, "POST", "/projects/get", projectRequest, &projectResponse)
+	err = app.HttpClient.Do(ctx, "POST", "/projects/get", projectRequest, &projectResponse, true)
 	if err != nil {
 		return nil, err
 	}
@@ -202,7 +202,7 @@ func (app *App) PullAllEnv(ctx context.Context, projectName, envName string) ([]
 		Email:     userEmail,
 	}
 	var envResponse config.GetEnvVersionsResponse
-	err = app.HttpClient.Do(ctx, "POST", "/env/search/all", envRequest, &envResponse)
+	err = app.HttpClient.Do(ctx, "POST", "/env/search/all", envRequest, &envResponse, true)
 	if err != nil {
 		return nil, err
 	}
@@ -254,7 +254,7 @@ func (app *App) RollbackEnv(ctx context.Context, projectName, envName string, ve
 		UserId:      uid,
 	}
 	var projectResponse config.GetMemberProjectResponse
-	err = app.HttpClient.Do(ctx, "POST", "/projects/get", projectRequest, &projectResponse)
+	err = app.HttpClient.Do(ctx, "POST", "/projects/get", projectRequest, &projectResponse, true)
 	if err != nil {
 		return err
 	}
@@ -267,7 +267,7 @@ func (app *App) RollbackEnv(ctx context.Context, projectName, envName string, ve
 		Version:   version,
 	}
 	var envResponse config.GetEnvResponse
-	err = app.HttpClient.Do(ctx, "POST", "/env/search", envRequest, &envResponse)
+	err = app.HttpClient.Do(ctx, "POST", "/env/search", envRequest, &envResponse, true)
 	if err != nil {
 		return err
 	}
@@ -285,7 +285,7 @@ func (app *App) RollbackEnv(ctx context.Context, projectName, envName string, ve
 		Metadata:   metadata,
 	}
 	var createResponse config.AddEnvResponse
-	if err := app.HttpClient.Do(ctx, "POST", "/env/create", createRequest, &createResponse); err != nil {
+	if err := app.HttpClient.Do(ctx, "POST", "/env/create", createRequest, &createResponse, true); err != nil {
 		return err
 	}
 

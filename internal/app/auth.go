@@ -6,6 +6,8 @@ import (
 
 	"github.com/envcrypts/envcrypt-cli/internal/config"
 	cryptoutils "github.com/envcrypts/envcrypt-cli/internal/crypto"
+	"github.com/google/uuid"
+	"github.com/spf13/viper"
 )
 
 func (app *App) Login(ctx context.Context, email, password string) error {
@@ -17,7 +19,7 @@ func (app *App) Login(ctx context.Context, email, password string) error {
 
 	var responseBody config.LoginResponseBody
 
-	err := app.HttpClient.Do(ctx, "POST", "/users/login", requestBody, &responseBody)
+	err := app.HttpClient.Do(ctx, "POST", "/users/login", requestBody, &responseBody, false)
 	if err != nil {
 		return err
 	}
@@ -68,7 +70,7 @@ func (app *App) Register(ctx context.Context, email, password string) error {
 	}
 	var responseBody config.CreateResponseBody
 
-	err = app.HttpClient.Do(ctx, "POST", "/users/create", requestBody, &responseBody)
+	err = app.HttpClient.Do(ctx, "POST", "/users/create", requestBody, &responseBody, false)
 	if err != nil {
 		return err
 	}
@@ -91,8 +93,23 @@ func (app *App) Register(ctx context.Context, email, password string) error {
 	return nil
 }
 
-func (app *App) Logout(email string) error {
+func (app *App) Logout(ctx context.Context, email string) error {
 	var errs []error
+
+	userId := viper.GetString("user.id")
+	uid, err := uuid.Parse(userId)
+	if err != nil {
+		return err
+	}
+
+	var requestBody = config.LogoutRequestBody{
+		UserID: uid,
+	}
+	var responseBody config.LogoutResponseBody
+	err = app.HttpClient.Do(ctx, "POST", "/users/logout", requestBody, &responseBody, false)
+	if err != nil {
+		return err
+	}
 
 	if err := cryptoutils.DeletePrivateKey(email); err != nil {
 		errs = append(errs, err)

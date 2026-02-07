@@ -80,6 +80,20 @@ func SaveUserId(id uuid.UUID) error {
 	return viper.WriteConfig()
 }
 
+func SaveRefreshToken(refreshToken string) error {
+	viper.Set("user.refresh_token", refreshToken)
+	dir, err := os.UserConfigDir()
+	if err != nil {
+		return err
+	}
+	appDir := filepath.Join(dir, "envcrypt")
+	path := filepath.Join(appDir, "config.yaml")
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return viper.WriteConfigAs(path)
+	}
+	return viper.WriteConfig()
+}
+
 func RemoveUserId() error {
 	viper.Set("user.id", "")
 	return viper.WriteConfig()

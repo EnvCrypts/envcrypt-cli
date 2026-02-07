@@ -27,7 +27,7 @@ func (app *App) ListServiceRoles(ctx context.Context) ([]config.ServiceRole, err
 	}
 
 	var responseBody config.ServiceRoleListResponse
-	err = app.HttpClient.Do(ctx, "POST", "/service_role/get/all", requestBody, &responseBody)
+	err = app.HttpClient.Do(ctx, "POST", "/service_role/get/all", requestBody, &responseBody, true)
 	if err != nil {
 		log.Print(err.Error())
 		return nil, err
@@ -57,7 +57,7 @@ func (app *App) CreateServiceRole(ctx context.Context, name, repoPrincipal strin
 	}
 
 	var responseBody config.ServiceRoleCreateResponse
-	err = app.HttpClient.Do(ctx, "POST", "/service_role/create", requestBody, &responseBody)
+	err = app.HttpClient.Do(ctx, "POST", "/service_role/create", requestBody, &responseBody, true)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +71,7 @@ func (app *App) GetServiceRole(ctx context.Context, repoPrincipal string) (*conf
 	}
 
 	var responseBody config.ServiceRoleGetResponse
-	err := app.HttpClient.Do(ctx, "POST", "/service_role/get", requestBody, &responseBody)
+	err := app.HttpClient.Do(ctx, "POST", "/service_role/get", requestBody, &responseBody, true)
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +92,7 @@ func (app *App) DeleteServiceRole(ctx context.Context, serviceRoleId uuid.UUID) 
 		CreatedBy:     uid,
 	}
 	var responseBody config.ServiceRoleDeleteResponse
-	err = app.HttpClient.Do(ctx, "POST", "/service_role/delete", requestBody, &responseBody)
+	err = app.HttpClient.Do(ctx, "POST", "/service_role/delete", requestBody, &responseBody, true)
 	if err != nil {
 		return err
 	}
@@ -106,7 +106,7 @@ func (app *App) GetPermissions(ctx context.Context, repoPrincipal string) (*conf
 	}
 
 	var responseBody config.ServiceRolePermsResponse
-	err := app.HttpClient.Do(ctx, "POST", "/service_role/perms", requestBody, &responseBody)
+	err := app.HttpClient.Do(ctx, "POST", "/service_role/perms", requestBody, &responseBody, true)
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +127,7 @@ func (app *App) DelegateAccess(ctx context.Context, repoPrincipal, projectName, 
 	}
 
 	var projectResp config.GetUserProjectResponse
-	if err := app.HttpClient.Do(ctx, "POST", "/projects/keys", projectReq, &projectResp); err != nil {
+	if err := app.HttpClient.Do(ctx, "POST", "/projects/keys", projectReq, &projectResp, true); err != nil {
 		return errors.New("could not get project keys")
 	}
 
@@ -170,7 +170,7 @@ func (app *App) DelegateAccess(ctx context.Context, repoPrincipal, projectName, 
 	}
 
 	var delegateResp config.ServiceRoleDelegateResponse
-	if err := app.HttpClient.Do(ctx, "POST", "/service_role/delegate", delegateReq, &delegateResp); err != nil {
+	if err := app.HttpClient.Do(ctx, "POST", "/service_role/delegate", delegateReq, &delegateResp, true); err != nil {
 		return err
 	}
 
@@ -185,7 +185,7 @@ func (app *App) GetServiceRoleProjectKeys(ctx context.Context, projectID, sessio
 		SessionID: sessionID,
 	}
 	var responseBody config.ServiceRollProjectKeyResponse
-	err := app.HttpClient.Do(ctx, "POST", "/service_role/project-keys", requestBody, &responseBody)
+	err := app.HttpClient.Do(ctx, "POST", "/service_role/project-keys", requestBody, &responseBody, false)
 	if err != nil {
 		return nil, err
 	}

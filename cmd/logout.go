@@ -1,6 +1,10 @@
 package cmd
 
-import "github.com/spf13/cobra"
+import (
+	"context"
+
+	"github.com/spf13/cobra"
+)
 
 var logoutCmd = &cobra.Command{
 	Use:   "logout",
@@ -13,7 +17,7 @@ re-authenticating.`,
 	SilenceUsage: true,
 
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if err := Application.Logout(email); err != nil {
+		if err := Application.Logout(context.Background(), email); err != nil {
 			return Error("not logged in", err)
 		}
 

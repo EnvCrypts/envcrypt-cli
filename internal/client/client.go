@@ -4,13 +4,20 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
+
+	"github.com/envcrypts/envcrypt-cli/internal/config"
+	cryptoutils "github.com/envcrypts/envcrypt-cli/internal/crypto"
+	"github.com/google/uuid"
+	"github.com/spf13/viper"
 )
 
 type Client struct {
-	baseUrl string
-	http    *http.Client
+	baseUrl     string
+	http        *http.Client
+	accessToken uuid.UUID
 }
 
 func NewClient(baseUrl string, client *http.Client) *Client {
@@ -30,6 +37,36 @@ func (c *Client) Do(
 	path string,
 	body any,
 	out any,
+	protected bool,
+) error {
+
+	err := c.doOnce(ctx, method, path, body, out, protected)
+	if err == nil {
+		return nil
+	}
+
+	var httpErr *HTTPError
+	if !errors.As(err, &httpErr) || httpErr.Status != http.StatusUnauthorized {
+		return err
+	}
+
+	if protected {
+		if err := c.Refresh(ctx); err != nil {
+			return fmt.Errorf("refresh failed: %w", err)
+		}
+		return c.doOnce(ctx, method, path, body, out, protected)
+	}
+
+	return err
+}
+
+func (c *Client) doOnce(
+	ctx context.Context,
+	method string,
+	path string,
+	body any,
+	out any,
+	protected bool,
 ) error {
 
 	var buf bytes.Buffer
@@ -51,6 +88,10 @@ func (c *Client) Do(
 
 	req.Header.Set("Content-Type", "application/json")
 
+	if protected {
+		req.Header.Set("X-Session-ID", c.accessToken.String())
+	}
+
 	resp, err := c.http.Do(req)
 	if err != nil {
 		return err
@@ -58,12 +99,13 @@ func (c *Client) Do(
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 400 {
-		var err ErrorResponse
-		decodeErr := json.NewDecoder(resp.Body).Decode(&err)
-		if decodeErr != nil {
-			return decodeErr
+		var errResp ErrorResponse
+		_ = json.NewDecoder(resp.Body).Decode(&errResp)
+
+		return &HTTPError{
+			Status: resp.StatusCode,
+			Body:   errResp.Error,
 		}
-		return fmt.Errorf(err.Error)
 	}
 
 	if out != nil {
@@ -71,4 +113,41 @@ func (c *Client) Do(
 	}
 
 	return nil
+}
+
+func (c *Client) Refresh(ctx context.Context) error {
+
+	userID := viper.GetString("user.id")
+	uid, err := uuid.Parse(userID)
+	if err != nil {
+		return err
+	}
+
+	req := config.RefreshRequestBody{
+		UserID: uid,
+	}
+
+	var resp config.RefreshResponseBody
+
+	err = c.doOnce(ctx, "POST", "/users/refresh", req, &resp, false)
+	if err != nil {
+		return err
+	}
+
+	c.accessToken = resp.Session.AccessToken
+	err = cryptoutils.SaveRefreshToken(resp.Session.RefreshToken.String())
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+type HTTPError struct {
+	Status int
+	Body   string
+}
+
+func (e *HTTPError) Error() string {
+	return fmt.Sprintf("%s", e.Body)
 }

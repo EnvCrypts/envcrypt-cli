@@ -23,7 +23,7 @@ func (app *App) CreateProject(ctx context.Context, projectName string) error {
 	}
 
 	var userResp config.UserKeyResponseBody
-	if err := app.HttpClient.Do(ctx, "POST", "/users/search", userReq, &userResp); err != nil {
+	if err := app.HttpClient.Do(ctx, "POST", "/users/search", userReq, &userResp, false); err != nil {
 		return err
 	}
 
@@ -46,7 +46,7 @@ func (app *App) CreateProject(ctx context.Context, projectName string) error {
 	}
 
 	var projectResp config.ProjectCreateResponse
-	if err := app.HttpClient.Do(ctx, "POST", "/projects/create", projectReq, &projectResp); err != nil {
+	if err := app.HttpClient.Do(ctx, "POST", "/projects/create", projectReq, &projectResp, true); err != nil {
 		return err
 	}
 
@@ -69,7 +69,7 @@ func (app *App) ListProjects(ctx context.Context) (*config.ListProjectResponse, 
 	}
 
 	var projectsRes config.ListProjectResponse
-	if err := app.HttpClient.Do(ctx, "POST", "/projects/list", projectsReq, &projectsRes); err != nil {
+	if err := app.HttpClient.Do(ctx, "POST", "/projects/list", projectsReq, &projectsRes, true); err != nil {
 		log.Print(projectsRes)
 		log.Print(err)
 		return nil, err
@@ -96,7 +96,7 @@ func (app *App) DeleteProject(ctx context.Context, projectName string) error {
 	}
 	var deleteResp config.ProjectDeleteResponse
 
-	if err := app.HttpClient.Do(ctx, "POST", "/projects/delete", deleteReq, &deleteResp); err != nil {
+	if err := app.HttpClient.Do(ctx, "POST", "/projects/delete", deleteReq, &deleteResp, true); err != nil {
 		return err
 	}
 

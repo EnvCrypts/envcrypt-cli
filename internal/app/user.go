@@ -23,7 +23,7 @@ func (app *App) AddUserToProject(ctx context.Context, memberEmail, projectName s
 	}
 
 	var projectResp config.GetUserProjectResponse
-	if err := app.HttpClient.Do(ctx, "POST", "/projects/keys", projectReq, &projectResp); err != nil {
+	if err := app.HttpClient.Do(ctx, "POST", "/projects/keys", projectReq, &projectResp, true); err != nil {
 		return errors.New("could not get project keys")
 	}
 
@@ -48,7 +48,7 @@ func (app *App) AddUserToProject(ctx context.Context, memberEmail, projectName s
 	}
 
 	var pubKeyResp config.UserKeyResponseBody
-	if err := app.HttpClient.Do(ctx, "POST", "/users/search", pubKeyReq, &pubKeyResp); err != nil {
+	if err := app.HttpClient.Do(ctx, "POST", "/users/search", pubKeyReq, &pubKeyResp, false); err != nil {
 		return errors.New("user not found")
 	}
 
@@ -68,7 +68,7 @@ func (app *App) AddUserToProject(ctx context.Context, memberEmail, projectName s
 	}
 
 	var addResp config.AddUserToProjectResponse
-	if err := app.HttpClient.Do(ctx, "POST", "/projects/addUser", addReq, &addResp); err != nil {
+	if err := app.HttpClient.Do(ctx, "POST", "/projects/addUser", addReq, &addResp, true); err != nil {
 		return err
 	}
 
@@ -91,7 +91,7 @@ func (app *App) RevokeAccess(ctx context.Context, projectName, userEmail string)
 	}
 
 	var revokeResp config.SetAccessResponse
-	if err := app.HttpClient.Do(ctx, "POST", "/projects/access", revokeRequest, &revokeResp); err != nil {
+	if err := app.HttpClient.Do(ctx, "POST", "/projects/access", revokeRequest, &revokeResp, true); err != nil {
 		return errors.New("could not revoke access")
 	}
 
@@ -112,7 +112,7 @@ func (app *App) GiveAccess(ctx context.Context, projectName, userEmail string) e
 		IsRevoked:   false,
 	}
 	var setAccessResp config.SetAccessResponse
-	if err := app.HttpClient.Do(ctx, "POST", "/projects/access", setAccessRequest, &setAccessResp); err != nil {
+	if err := app.HttpClient.Do(ctx, "POST", "/projects/access", setAccessRequest, &setAccessResp, true); err != nil {
 		return errors.New("could not set access")
 	}
 
