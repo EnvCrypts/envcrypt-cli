@@ -17,7 +17,11 @@ EnvCrypt CLI is the client-side tool for the EnvCrypt platform. It implements a 
 
 ### Automated Install (Recommended)
 
-> **Note**: We are working on a universal installation script. Check back soon!
+Run the following command to install the latest version:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/envcrypts/envcrypt-cli/main/install.sh | bash
+```
 
 ### Prebuilt Binaries
 
