@@ -42,6 +42,7 @@ func main() {
 	if serverUrl == "" {
 		serverUrl = "http://localhost:8081"
 	}
+	fmt.Println("Server URL:", serverUrl)
 
 	a := app.NewApp(serverUrl)
 	cmd.Execute(a)
