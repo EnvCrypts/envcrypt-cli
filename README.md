@@ -2,20 +2,28 @@
 
 **Secure, end-to-end encrypted environment variable management for modern teams.**
 
-EnvCrypt CLI provides a zero-trust architecture for managing secrets. All environment variables are encrypted client-side using robust asymmetric cryptography before ever leaving your machine. The server never sees your raw secrets.
+EnvCrypt CLI is the client-side tool for the EnvCrypt platform. It implements a Zero-Trust architecture where all secrets are encrypted locally on your machine before they are ever sent to the server. This ensures that the server—and anyone with access to it—can never see your raw environment variables.
 
 ## Features
 
-- **End-to-End Encryption**: Secrets are encrypted locally with per-project, per-user keys. The server acts only as a blind store.
-- **Immutable Versioning**: Every change creates a new, immutable version of your environment.
-- **Atomic Rollbacks**: Instantaneously revert to any previous version with guaranteed consistency.
-- **Granular Access Control**: Grant and revoke access to projects for specific team members.
-- **Diffing**: Visualize changes between environment versions before applying them.
-- **Developer Experience**: Minimalist, efficient CLI designed for seamless integration into your workflow.
+-   **End-to-End Encryption**: Secrets are encrypted locally using AES-256-GCM. The server only sees ciphertext.
+-   **Zero-Trust Model**: Your private key is stored only on your device (in the system keyring).
+-   **Immutable Versioning**: Every `push` creates a new, immutable version. Rollback to any previous state instantly.
+-   **Granular Access Control**: Manage access for team members and robustly handle user revocation.
+-   **Service Roles**: Securely inject secrets into CI/CD pipelines using dedicated machine identities.
+-   **Cross-Platform**: Works on Linux, macOS, and Windows.
 
 ## Installation
 
-### From Source
+### Automated Install (Recommended)
+
+> **Note**: We are working on a universal installation script. Check back soon!
+
+### Prebuilt Binaries
+
+Download the latest release for your platform from the [Releases](https://github.com/envcrypts/envcrypt-cli/releases) page.
+
+### Building From Source
 
 Requires Go 1.22+:
 
@@ -29,7 +37,7 @@ Ensure your `$GOPATH/bin` is in your system `$PATH`.
 
 ### 1. Account Setup
 
-First, create an account and log in. keys are generated locally during registration.
+Create an account. This generates a local X25519 keypair and securely stores the private key in your OS keyring.
 
 ```bash
 envcrypt register
@@ -38,7 +46,7 @@ envcrypt login
 
 ### 2. Create a Project
 
-Create a new project namespace for your application.
+Initialize a project. You become the admin and the Project Master Key (PMK) is generated and wrapped for you.
 
 ```bash
 envcrypt create my-app
@@ -46,64 +54,54 @@ envcrypt create my-app
 
 ### 3. Push Secrets
 
-Navigate to your project directory containing a `.env` file and push it to the `dev` environment.
+Encrypt and upload your local `.env` file.
 
 ```bash
-# Push the local .env file to the 'dev' environment
+# Push to 'dev' environment
 envcrypt push my-app --env dev --env-file .env
 ```
 
 ### 4. Pull Secrets
 
-On another machine (or for deployment), pull the secrets down.
+Decrypt and retrieve secrets on another machine or in production.
 
 ```bash
 # Pull 'dev' secrets to a local .env file
 envcrypt pull my-app --env dev
 ```
 
-## Command Reference
+## Advanced Usage
 
-### Authentication
+### Team Management
 
-- **`register`**: Create a new account and generate local key pairs.
-- **`login`**: Authenticate with your credentials.
-- **`logout`**: Clear local session.
-- **`whoami`**: Display current user information.
+Grant access to other users. The CLI handles the secure re-wrapping of the Project Master Key for the new user.
 
-### Project Management
+```bash
+envcrypt grant my-app colleague@example.com
+```
 
-- **`create [name]`**: Initialize a new project. You automatically become the owner.
-- **`list`**: Show all projects you have access to.
-- **`delete [name]`**: Permanently delete a project and all its environments (Ownership required).
+### Service Roles (CI/CD)
 
-### Secrets Management
+Create restricted machine users for your deployment pipelines.
 
-- **`push [project]`**: Encrypt and upload variables from a local file.
-    - Flags: `--env` (default: dev), `--env-file` (default: .env)
-- **`pull [project]`**: Download and decrypt variables to a local file.
-    - Flags: `--env` (default: dev), `--env-file` (default: .env), `--yes` (skip confirmation)
-- **`add [project] [key=value]`**: Add or update a single variable without a file.
+1.  **Create Role**: `envcrypt service-role create my-ci-role` (Save the output private key!)
+2.  **Delegate Access**: `envcrypt service-role grant my-ci-role my-app dev`
+3.  **In CI**: Use `envcrypt ci login` with the private key to authenticate.
 
-### Versioning & History
+### Rollbacks
 
-- **`diff [old] [new]`**: Compare two environment versions.
-    - Flags: `--env`, `--project`, `--show-secrets` (reveal values)
-    - If versions are omitted, interactive mode is launched.
-- **`rollback`**: Revert an environment to a previous version.
-    - Interactive prompts guide you through version selection and confirmation.
+Mistake in production? Revert instantly.
 
-### Access Control
-
-- **`grant [project] [email]`**: Authorize a user to access a project. They must have an EnvCrypt account.
-- **`revoke [project] [email]`**: Remove a user's access to a project.
+```bash
+envcrypt rollback
+```
 
 ## Security Architecture
 
-EnvCrypt uses a **Zero-Trust** model:
+EnvCrypt uses a **hybrid cryptosystem**:
 
-1.  **Client-Side Key Generation**: When you register, a Public/Private key pair is generated on your machine. The Private key is stored locally, encryption-protected by your password. Only the Public key is sent to the *server*
-2.  **Project Keys**: Each project has a unique Project Master Key (PMK).
-3.  **Envelope Encryption**: The PMK is encrypted individually for each authorized user using their Public Key.
-4.  **Secret Encryption**: Environment variables are encrypted using the PMK and a nonce locally.
-5.  **Storage**: The server stores only the encrypted secrets and the encrypted PMKs. It cannot decrypt any data.
+1.  **Symmetric Encryption**: Environment variables are encrypted with a per-project AES-256 key (PMK).
+2.  **Key Wrapping**: The PMK is encrypted ("wrapped") for each user using their public X25519 key.
+3.  **Authentication**: All requests are signed and authenticated.
+4.  **Local Storage**: Private keys never leave your device unencrypted.
+

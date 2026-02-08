@@ -40,6 +40,7 @@ func (app *App) CreateServiceRole(ctx context.Context, name, repoPrincipal strin
 
 	userID := viper.GetString("user.id")
 	uid, err := uuid.Parse(userID)
+
 	if err != nil {
 		return nil, errors.New("user id not valid")
 	}
