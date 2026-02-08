@@ -9,6 +9,8 @@ builds:
     binary: envcrypt
     env:
       - CGO_ENABLED=0
+    ldflags:
+      - -s -w -X github.com/envcrypts/envcrypt-cli/cmd.Version={{ .Version }}
     goos:
       - linux
       - darwin
