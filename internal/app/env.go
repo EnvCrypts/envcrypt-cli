@@ -41,7 +41,7 @@ func (app *App) PushEnv(ctx context.Context, projectName, envName string, envMap
 	}
 
 	wrappedKey := &cryptoutils.WrappedKey{
-		WrappedPMK:       projectResponse.WrappedPMK,
+		WrappedPRK:       projectResponse.WrappedPRK,
 		WrapNonce:        projectResponse.WrapNonce,
 		WrapEphemeralPub: projectResponse.EphemeralPublicKey,
 	}
@@ -51,27 +51,42 @@ func (app *App) PushEnv(ctx context.Context, projectName, envName string, envMap
 		return errors.New("could not prepare environment variables")
 	}
 
-	pmk, err := cryptoutils.UnwrapPMK(wrappedKey, privateKey)
+	prk, err := cryptoutils.UnwrapPRK(wrappedKey, privateKey)
 	if err != nil {
 		return errors.New("could not unwrap private key")
 	}
 
-	// encrypt using pmk and store the nonce, ciphertext
-	encryptedData, nonce, err := cryptoutils.EncryptENV(pmk, data)
+	// generate new DEK
+	dek, err := cryptoutils.GenerateDEK()
+	if err != nil {
+		return errors.New("could not generate DEK")
+	}
+
+	// encrypt using DEK and store the nonce, ciphertext
+	encryptedData, nonce, err := cryptoutils.EncryptENV(dek, data)
 	if err != nil {
 		return errors.New("could not encrypt data")
+	}
+
+	// wrap DEK with PMK
+	wrappedDEK, dekNonce, err := cryptoutils.WrapDEK(prk, dek)
+	if err != nil {
+		return errors.New("could not wrap DEK")
 	}
 
 	metadata := config.Metadata{
 		Type: "env_created",
 	}
 	createRequest := config.AddEnvRequest{
-		ProjectId:  projectResponse.ProjectId,
-		UserId:     uid,
-		EnvName:    envName,
-		CipherText: encryptedData,
-		Nonce:      nonce,
-		Metadata:   metadata,
+		ProjectId:         projectResponse.ProjectId,
+		UserId:            uid,
+		EnvName:           envName,
+		CipherText:        encryptedData,
+		Nonce:             nonce,
+		WrappedDEK:        wrappedDEK,
+		DekNonce:          dekNonce,
+		EncryptionVersion: 2,
+		Metadata:          metadata,
 	}
 
 	var createResponse config.AddEnvResponse
@@ -135,19 +150,24 @@ func (app *App) PullEnv(ctx context.Context, projectName, envName string) (map[s
 	}
 
 	wrappedKey := &cryptoutils.WrappedKey{
-		WrappedPMK:       keyResponse.WrappedPMK,
+		WrappedPRK:       keyResponse.WrappedPRK,
 		WrapNonce:        keyResponse.WrapNonce,
 		WrapEphemeralPub: keyResponse.EphemeralPublicKey,
 	}
 
-	pmk, err := cryptoutils.UnwrapPMK(wrappedKey, userPriv)
+	prk, err := cryptoutils.UnwrapPRK(wrappedKey, userPriv)
 	if err != nil {
 		return nil, errors.New("could not unwrap private key")
 	}
 
-	envBytes, err := cryptoutils.DecryptENV(pmk, envResponse.CipherText, envResponse.Nonce)
+	dek, err := cryptoutils.UnwrapDEK(prk, envResponse.WrappedDEK, envResponse.DekNonce)
 	if err != nil {
-		return nil, errors.New("could not decrypt data")
+		return nil, errors.New("could not unwrap target DEK")
+	}
+
+	envBytes, err := cryptoutils.DecryptENV(dek, envResponse.CipherText, envResponse.Nonce)
+	if err != nil {
+		return nil, errors.New("could not decrypt data with DEK")
 	}
 
 	envMap, err := cryptoutils.ReadCompressedEnv(envBytes)
@@ -191,7 +211,7 @@ func (app *App) PullAllEnv(ctx context.Context, projectName, envName string) ([]
 	}
 
 	wrappedKey := &cryptoutils.WrappedKey{
-		WrappedPMK:       projectResponse.WrappedPMK,
+		WrappedPRK:       projectResponse.WrappedPRK,
 		WrapNonce:        projectResponse.WrapNonce,
 		WrapEphemeralPub: projectResponse.EphemeralPublicKey,
 	}
@@ -207,7 +227,7 @@ func (app *App) PullAllEnv(ctx context.Context, projectName, envName string) ([]
 		return nil, err
 	}
 
-	pmk, err := cryptoutils.UnwrapPMK(wrappedKey, userPriv)
+	prk, err := cryptoutils.UnwrapPRK(wrappedKey, userPriv)
 	if err != nil {
 		return nil, errors.New("could not unwrap private key")
 	}
@@ -215,9 +235,14 @@ func (app *App) PullAllEnv(ctx context.Context, projectName, envName string) ([]
 	envs := make([]DecryptedEnvVersion, len(envResponse.EnvVersions))
 
 	for i, ver := range envResponse.EnvVersions {
-		envMapBytes, err := cryptoutils.DecryptENV(pmk, ver.CipherText, ver.Nonce)
+		dek, unwrapErr := cryptoutils.UnwrapDEK(prk, ver.WrappedDEK, ver.DekNonce)
+		if unwrapErr != nil {
+			return nil, errors.New("could not unwrap target DEK")
+		}
+
+		envMapBytes, err := cryptoutils.DecryptENV(dek, ver.CipherText, ver.Nonce)
 		if err != nil {
-			return nil, errors.New("could not decrypt data")
+			return nil, errors.New("could not decrypt data with DEK")
 		}
 
 		envMap, err := cryptoutils.ReadCompressedEnv(envMapBytes)
@@ -277,12 +302,15 @@ func (app *App) RollbackEnv(ctx context.Context, projectName, envName string, ve
 		Type: "env_rollback",
 	}
 	createRequest := config.AddEnvRequest{
-		ProjectId:  projectResponse.ProjectId,
-		UserId:     uid,
-		EnvName:    envName,
-		CipherText: envResponse.CipherText,
-		Nonce:      envResponse.Nonce,
-		Metadata:   metadata,
+		ProjectId:         projectResponse.ProjectId,
+		UserId:            uid,
+		EnvName:           envName,
+		CipherText:        envResponse.CipherText,
+		Nonce:             envResponse.Nonce,
+		WrappedDEK:        envResponse.WrappedDEK,
+		DekNonce:          envResponse.DekNonce,
+		EncryptionVersion: envResponse.EncryptionVersion,
+		Metadata:          metadata,
 	}
 	var createResponse config.AddEnvResponse
 	if err := app.HttpClient.Do(ctx, "POST", "/env/create", createRequest, &createResponse, true); err != nil {

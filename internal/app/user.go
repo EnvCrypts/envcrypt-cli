@@ -28,7 +28,7 @@ func (app *App) AddUserToProject(ctx context.Context, memberEmail, projectName s
 	}
 
 	wrappedKey := &cryptoutils.WrappedKey{
-		WrappedPMK:       projectResp.WrappedPMK,
+		WrappedPRK:       projectResp.WrappedPRK,
 		WrapNonce:        projectResp.WrapNonce,
 		WrapEphemeralPub: projectResp.EphemeralPublicKey,
 	}
@@ -37,7 +37,7 @@ func (app *App) AddUserToProject(ctx context.Context, memberEmail, projectName s
 		return errors.New("user not authenticated")
 	}
 
-	pmk, err := cryptoutils.UnwrapPMK(wrappedKey, privateKey)
+	prk, err := cryptoutils.UnwrapPRK(wrappedKey, privateKey)
 	if err != nil {
 		return errors.New("forbidden access")
 	}
@@ -53,7 +53,7 @@ func (app *App) AddUserToProject(ctx context.Context, memberEmail, projectName s
 	}
 
 	// Wrap Key for user
-	memberWrappedKey, err := cryptoutils.WrapPMKForUser(pmk, pubKeyResp.PublicKey)
+	memberWrappedKey, err := cryptoutils.WrapPRKForUser(prk, pubKeyResp.PublicKey)
 	if err != nil {
 		return errors.New("unable to wrap user key")
 	}
@@ -62,7 +62,7 @@ func (app *App) AddUserToProject(ctx context.Context, memberEmail, projectName s
 		ProjectName:        projectName,
 		UserId:             pubKeyResp.UserId,
 		AdminId:            uid,
-		WrappedPMK:         memberWrappedKey.WrappedPMK,
+		WrappedPRK:         memberWrappedKey.WrappedPRK,
 		WrapNonce:          memberWrappedKey.WrapNonce,
 		EphemeralPublicKey: memberWrappedKey.WrapEphemeralPub,
 	}

@@ -27,12 +27,12 @@ func (app *App) CreateProject(ctx context.Context, projectName string) error {
 		return err
 	}
 
-	pmk := make([]byte, 32)
-	if _, err := rand.Read(pmk); err != nil {
+	prk := make([]byte, 32)
+	if _, err := rand.Read(prk); err != nil {
 		return err
 	}
 
-	wrappedKey, err := cryptoutils.WrapPMKForUser(pmk, userResp.PublicKey)
+	wrappedKey, err := cryptoutils.WrapPRKForUser(prk, userResp.PublicKey)
 	if err != nil {
 		return err
 	}
@@ -40,7 +40,7 @@ func (app *App) CreateProject(ctx context.Context, projectName string) error {
 	projectReq := config.ProjectCreateRequest{
 		Name:               projectName,
 		UserId:             userResp.UserId,
-		WrappedPMK:         wrappedKey.WrappedPMK,
+		WrappedPRK:         wrappedKey.WrappedPRK,
 		WrapNonce:          wrappedKey.WrapNonce,
 		EphemeralPublicKey: wrappedKey.WrapEphemeralPub,
 	}
