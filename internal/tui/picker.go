@@ -66,10 +66,14 @@ func (m pickerModel) View() string {
 	return b.String()
 }
 
-// RunPicker presents a keyboard-navigable list. Returns the chosen item or an error if cancelled.
+// RunPicker presents a keyboard-navigable list in interactive terminals.
+// In non-interactive environments it returns an error directing the user to use flags.
 func RunPicker(title string, items []string) (string, error) {
 	if len(items) == 0 {
 		return "", fmt.Errorf("no items to pick from")
+	}
+	if !IsInteractive() {
+		return "", fmt.Errorf("not a terminal: provide required values via flags")
 	}
 	p := tea.NewProgram(pickerModel{title: title, items: items})
 	result, err := p.Run()

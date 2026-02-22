@@ -54,9 +54,11 @@ func (m confirmModel) View() string {
 	return b.String()
 }
 
-// ConfirmDangerousAction presents a bubbletea inline confirmation prompt.
-// Returns true only if the user types `expected` exactly and presses Enter.
 func ConfirmDangerousAction(prompt, expected string) bool {
+	if !IsInteractive() {
+		Warn(fmt.Sprintf("Non-interactive: skipping confirmation for %q (use --force to override)", prompt))
+		return false
+	}
 	p := tea.NewProgram(confirmModel{prompt: prompt, expected: expected})
 	result, err := p.Run()
 	if err != nil {
@@ -66,14 +68,20 @@ func ConfirmDangerousAction(prompt, expected string) bool {
 	return ok && final.done
 }
 
-// ConfirmOverwrite asks the user to type "yes" to confirm overwriting a file.
+
 func ConfirmOverwrite(path string) bool {
+	if !IsInteractive() {
+		return false
+	}
 	return ConfirmDangerousAction(fmt.Sprintf("Overwrite %q?", path), "yes")
 }
 
 // PromptWithDefault shows a single-field form pre-filled with defaultVal.
-// Returns defaultVal unchanged if the user submits an empty value.
+// In non-interactive environments it returns defaultVal unchanged.
 func PromptWithDefault(label, defaultVal string) string {
+	if !IsInteractive() {
+		return defaultVal
+	}
 	vals, err := RunForm([]FormField{{Label: label}}, []string{defaultVal})
 	if err != nil || len(vals) == 0 || vals[0] == "" {
 		return defaultVal

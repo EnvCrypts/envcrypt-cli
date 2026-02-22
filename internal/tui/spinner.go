@@ -55,7 +55,11 @@ func (m spinnerModel) View() string {
 }
 
 // RunActionWithSpinner runs action in the background while showing a spinner.
+// In non-interactive environments the spinner is suppressed and the action runs directly.
 func RunActionWithSpinner(title string, action func() error) error {
+	if !IsInteractive() {
+		return action()
+	}
 	s := spinner.New()
 	s.Spinner = spinner.Dot
 	s.Style = StylePrimary

@@ -67,11 +67,25 @@ func runTable(t table.Model) error {
 }
 
 // RunProjectsTable renders an interactive bubbletea table of projects.
+// Falls back to plain-text output in non-interactive environments.
 func RunProjectsTable(projects []config.Project) error {
 	if len(projects) == 0 {
 		fmt.Println(StyleMuted.Render("No projects found."))
 		return nil
 	}
+
+	if !IsInteractive() {
+		fmt.Printf("%-24s  %-12s  %-10s\n", "PROJECT", "ROLE", "STATUS")
+		for _, p := range projects {
+			status := "active"
+			if p.IsRevoked {
+				status = "revoked"
+			}
+			fmt.Printf("%-24s  %-12s  %-10s\n", p.Name, p.Role, status)
+		}
+		return nil
+	}
+
 	rows := make([]table.Row, len(projects))
 	for i, p := range projects {
 		status := "active"
@@ -88,11 +102,21 @@ func RunProjectsTable(projects []config.Project) error {
 }
 
 // RunServiceRolesTable renders an interactive bubbletea table of service roles.
+// Falls back to plain-text output in non-interactive environments.
 func RunServiceRolesTable(roles []config.ServiceRole) error {
 	if len(roles) == 0 {
 		fmt.Println(StyleMuted.Render("No service roles found."))
 		return nil
 	}
+
+	if !IsInteractive() {
+		fmt.Printf("%-24s  %-40s\n", "NAME", "REPO PRINCIPAL")
+		for _, r := range roles {
+			fmt.Printf("%-24s  %-40s\n", r.Name, r.RepoPrincipal)
+		}
+		return nil
+	}
+
 	rows := make([]table.Row, len(roles))
 	for i, r := range roles {
 		rows[i] = table.Row{r.Name, r.RepoPrincipal}

@@ -38,7 +38,6 @@ func newFormModel(fields []FormField, prefills []string) formModel {
 		t.Cursor.Style = cursorStyle
 		t.Cursor.SetMode(cursor.CursorBlink)
 		t.CharLimit = 256
-
 		if f.Secret {
 			t.EchoMode = textinput.EchoPassword
 			t.EchoCharacter = '•'
@@ -124,9 +123,12 @@ func (m formModel) values() []string {
 	return vals
 }
 
-// RunForm runs a bubbletea multi-field form. prefills sets initial values per field.
-// Returns collected values in field order, or an error if cancelled.
+// RunForm runs a bubbletea multi-field form in interactive terminals.
+// In non-interactive environments it returns an error directing the user to use flags.
 func RunForm(fields []FormField, prefills []string) ([]string, error) {
+	if !IsInteractive() {
+		return nil, fmt.Errorf("not a terminal: provide required values via flags")
+	}
 	m := newFormModel(fields, prefills)
 	p := tea.NewProgram(m)
 	result, err := p.Run()
