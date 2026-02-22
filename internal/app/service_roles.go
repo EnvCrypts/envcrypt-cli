@@ -121,7 +121,7 @@ func (app *App) DelegateAccess(ctx context.Context, repoPrincipal, projectName, 
 		return errors.New("user not authenticated")
 	}
 
-	// 1. Get Project Keys to get WrappedPMK
+	// 1. Get Project Keys to get WrappedPRK
 	projectReq := config.GetUserProjectRequest{
 		ProjectName: projectName,
 		UserId:      uid,
@@ -133,7 +133,7 @@ func (app *App) DelegateAccess(ctx context.Context, repoPrincipal, projectName, 
 	}
 
 	wrappedKey := &cryptoutils.WrappedKey{
-		WrappedPMK:       projectResp.WrappedPMK,
+		WrappedPRK:       projectResp.WrappedPRK,
 		WrapNonce:        projectResp.WrapNonce,
 		WrapEphemeralPub: projectResp.EphemeralPublicKey,
 	}
@@ -142,7 +142,7 @@ func (app *App) DelegateAccess(ctx context.Context, repoPrincipal, projectName, 
 		return errors.New("user not authenticated")
 	}
 
-	pmk, err := cryptoutils.UnwrapPMK(wrappedKey, privateKey)
+	prk, err := cryptoutils.UnwrapPRK(wrappedKey, privateKey)
 	if err != nil {
 		return errors.New("forbidden access: cannot unwrap project key")
 	}
@@ -154,7 +154,7 @@ func (app *App) DelegateAccess(ctx context.Context, repoPrincipal, projectName, 
 	}
 
 	// 3. Wrap PMK for Service Role
-	serviceRoleWrappedKey, err := cryptoutils.WrapPMKForUser(pmk, role.ServiceRolePublicKey)
+	serviceRoleWrappedKey, err := cryptoutils.WrapPRKForUser(prk, role.ServiceRolePublicKey)
 	if err != nil {
 		return errors.New("unable to wrap key for service role")
 	}
@@ -164,7 +164,7 @@ func (app *App) DelegateAccess(ctx context.Context, repoPrincipal, projectName, 
 		RepoPrincipal:      repoPrincipal,
 		ProjectId:          projectResp.ProjectId,
 		EnvName:            env,
-		WrappedPMK:         serviceRoleWrappedKey.WrappedPMK,
+		WrappedPRK:         serviceRoleWrappedKey.WrappedPRK,
 		WrapNonce:          serviceRoleWrappedKey.WrapNonce,
 		EphemeralPublicKey: serviceRoleWrappedKey.WrapEphemeralPub,
 		DelegatedBy:        uid,

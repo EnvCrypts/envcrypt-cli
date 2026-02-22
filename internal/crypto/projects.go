@@ -64,7 +64,7 @@ func DeriveWrapKey(sharedSecret []byte) ([]byte, error) {
 		sha256.New,
 		sharedSecret,
 		nil,
-		[]byte("envcrypt-pmk-wrap"),
+		[]byte("envcrypt-prk-wrap"),
 	)
 
 	key := make([]byte, 32)
@@ -76,18 +76,18 @@ func DeriveWrapKey(sharedSecret []byte) ([]byte, error) {
 }
 
 type WrappedKey struct {
-	WrappedPMK       []byte `json:"wrapped_pmk"`        // AES-GCM ciphertext
+	WrappedPRK       []byte `json:"wrapped_prk"`        // AES-GCM ciphertext
 	WrapNonce        []byte `json:"wrap_nonce"`         // 12 bytes
 	WrapEphemeralPub []byte `json:"wrap_ephemeral_pub"` // 32 bytes
 }
 
-func WrapPMKForUser(
-	pmk []byte,
+func WrapPRKForUser(
+	prk []byte,
 	recipientUserPublicKey []byte,
 ) (*WrappedKey, error) {
 
-	if len(pmk) != 32 {
-		return nil, errors.New("invalid PMK length")
+	if len(prk) != 32 {
+		return nil, errors.New("invalid PRK length")
 	}
 	if len(recipientUserPublicKey) != 32 {
 		return nil, errors.New("invalid recipient public key length")
@@ -131,16 +131,16 @@ func WrapPMKForUser(
 		return nil, err
 	}
 
-	wrappedPMK := gcm.Seal(nil, nonce, pmk, nil)
+	wrappedPMK := gcm.Seal(nil, nonce, prk, nil)
 
 	return &WrappedKey{
-		WrappedPMK:       wrappedPMK,
+		WrappedPRK:       wrappedPMK,
 		WrapNonce:        nonce,
 		WrapEphemeralPub: ephemeral.PublicKey,
 	}, nil
 }
 
-func UnwrapPMK(
+func UnwrapPRK(
 	wrapped *WrappedKey,
 	userPrivateKey []byte,
 ) ([]byte, error) {
@@ -159,7 +159,7 @@ func UnwrapPMK(
 	//fmt.Printf("WrapKey (%d): %x\n", len(wrapKey), wrapKey)
 	//
 	//fmt.Printf("Nonce (%d): %x\n", len(wrapped.WrapNonce), wrapped.WrapNonce)
-	//fmt.Printf("Ciphertext (%d): %x\n", len(wrapped.WrappedPMK), wrapped.WrappedPMK)
+	//fmt.Printf("Ciphertext (%d): %x\n", len(wrapped.WrappedPRK), wrapped.WrappedPRK)
 
 	// 1. Derive shared secret
 	sharedSecret, err := X25519SharedSecret(
@@ -187,21 +187,21 @@ func UnwrapPMK(
 		return nil, err
 	}
 
-	pmk, err := gcm.Open(
+	prk, err := gcm.Open(
 		nil,
 		wrapped.WrapNonce,
-		wrapped.WrappedPMK,
+		wrapped.WrappedPRK,
 		nil,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	return pmk, nil
+	return prk, nil
 }
 
-func EncryptENV(pmk []byte, data []byte) ([]byte, []byte, error) {
-	block, err := aes.NewCipher(pmk)
+func EncryptENV(prk []byte, data []byte) ([]byte, []byte, error) {
+	block, err := aes.NewCipher(prk)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -216,9 +216,9 @@ func EncryptENV(pmk []byte, data []byte) ([]byte, []byte, error) {
 	return gcm.Seal(nil, nonce, data, nil), nonce, nil
 }
 
-func DecryptENV(pmk []byte, encryptedData []byte, nonce []byte) ([]byte, error) {
+func DecryptENV(prk []byte, encryptedData []byte, nonce []byte) ([]byte, error) {
 
-	block, err := aes.NewCipher(pmk)
+	block, err := aes.NewCipher(prk)
 	if err != nil {
 		return nil, err
 	}
@@ -234,4 +234,44 @@ func zero(b []byte) {
 	for i := range b {
 		b[i] = 0
 	}
+}
+
+func GenerateDEK() ([]byte, error) {
+	dek := make([]byte, 32)
+	if _, err := rand.Read(dek); err != nil {
+		return nil, err
+	}
+	return dek, nil
+}
+
+func WrapDEK(prk []byte, dek []byte) ([]byte, []byte, error) {
+	block, err := aes.NewCipher(prk)
+	if err != nil {
+		return nil, nil, err
+	}
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	nonce := make([]byte, gcm.NonceSize())
+	if _, err := rand.Read(nonce); err != nil {
+		return nil, nil, err
+	}
+
+	wrappedDEK := gcm.Seal(nil, nonce, dek, nil)
+	return wrappedDEK, nonce, nil
+}
+
+func UnwrapDEK(prk []byte, wrappedDEK []byte, dekNonce []byte) ([]byte, error) {
+	block, err := aes.NewCipher(prk)
+	if err != nil {
+		return nil, err
+	}
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, err
+	}
+
+	return gcm.Open(nil, dekNonce, wrappedDEK, nil)
 }

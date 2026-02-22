@@ -65,17 +65,17 @@ Example:
 		}
 
 		wrappedKey := &cryptoutils.WrappedKey{
-			WrappedPMK:       keysResp.WrappedPMK,
+			WrappedPRK:       keysResp.WrappedPRK,
 			WrapNonce:        keysResp.WrapNonce,
 			WrapEphemeralPub: keysResp.EphemeralPublicKey,
 		}
 
-		pmk, err := cryptoutils.UnwrapPMK(wrappedKey, privateKey)
+		prk, err := cryptoutils.UnwrapPRK(wrappedKey, privateKey)
 		if err != nil {
 			return Error("failed to unwrap project key", err)
 		}
 
-		envMap, err := Application.PullEnvForCI(cmd.Context(), *projectID, ciEnv, pmk)
+		envMap, err := Application.PullEnvForCI(cmd.Context(), *projectID, ciEnv, prk)
 		if err != nil {
 			return Error("failed to pull environment variables", err)
 		}

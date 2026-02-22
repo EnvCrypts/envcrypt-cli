@@ -72,7 +72,7 @@ type ServiceRoleDelegateRequest struct {
 	ProjectId uuid.UUID `json:"project_id"`
 	EnvName   string    `json:"env_name"`
 
-	WrappedPMK         []byte `json:"wrapped_pmk"`
+	WrappedPRK         []byte `json:"wrapped_prk"`
 	WrapNonce          []byte `json:"wrap_nonce"`
 	EphemeralPublicKey []byte `json:"ephemeral_public_key"`
 

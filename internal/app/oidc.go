@@ -23,7 +23,7 @@ func (app *App) GetSessionID(ctx context.Context, oidcToken string) (*uuid.UUID,
 	return &githubOIDCResponse.SessionID, &githubOIDCResponse.ProjectID, nil
 }
 
-func (app *App) PullEnvForCI(ctx context.Context, projectID uuid.UUID, envName string, pmk []byte) (map[string]string, error) {
+func (app *App) PullEnvForCI(ctx context.Context, projectID uuid.UUID, envName string, prk []byte) (map[string]string, error) {
 	envRequest := config.GetEnvForCIRequest{
 		ProjectId: projectID,
 		EnvName:   envName,
@@ -35,9 +35,14 @@ func (app *App) PullEnvForCI(ctx context.Context, projectID uuid.UUID, envName s
 		return nil, err
 	}
 
-	envBytes, err := cryptoutils.DecryptENV(pmk, envResponse.CipherText, envResponse.Nonce)
+	dek, err := cryptoutils.UnwrapDEK(prk, envResponse.WrappedDEK, envResponse.DekNonce)
 	if err != nil {
-		return nil, errors.New("could not decrypt data")
+		return nil, errors.New("could not unwrap target DEK")
+	}
+
+	envBytes, err := cryptoutils.DecryptENV(dek, envResponse.CipherText, envResponse.Nonce)
+	if err != nil {
+		return nil, errors.New("could not decrypt data with DEK")
 	}
 
 	envMap, err := cryptoutils.ReadCompressedEnv(envBytes)
