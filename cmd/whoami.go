@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"github.com/envcrypts/envcrypt-cli/internal/tui"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -18,16 +20,16 @@ var whoamiCmd = &cobra.Command{
 		userID := viper.GetString("user.id")
 
 		if email == "" {
-			return Error(
+			return tui.Error(
 				"not logged in",
-				nil,
-			)
+				nil)
+
 		}
 
-		Success("Logged in as " + email)
+		tui.Success("Logged in as " + email)
 
 		if userID != "" {
-			Info("User ID: " + userID)
+			tui.Info("User ID: " + userID)
 		}
 
 		return nil

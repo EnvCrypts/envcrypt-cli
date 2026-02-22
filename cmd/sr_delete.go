@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"github.com/envcrypts/envcrypt-cli/internal/tui"
+
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -20,7 +22,7 @@ var serviceRoleDeleteCmd = &cobra.Command{
 
 		if repoPrincipal == "" {
 			defPrincipal, _, _, _ := DetectGitContext()
-			repoPrincipal = PromptWithDefault("Service Role Principal", defPrincipal)
+			repoPrincipal = tui.PromptWithDefault("Service Role Principal", defPrincipal)
 		}
 
 		if repoPrincipal == "" {
@@ -32,7 +34,7 @@ var serviceRoleDeleteCmd = &cobra.Command{
 			return err
 		}
 
-		if !ConfirmDangerousAction(fmt.Sprintf("Are you sure you want to delete service role %q?", role.Name), role.Name) {
+		if !tui.ConfirmDangerousAction(fmt.Sprintf("Are you sure you want to delete service role %q?", role.Name), role.Name) {
 			return nil
 		}
 
@@ -40,7 +42,7 @@ var serviceRoleDeleteCmd = &cobra.Command{
 			return err
 		}
 
-		Success(fmt.Sprintf("Service role %q deleted", role.Name))
+		tui.Success(fmt.Sprintf("Service role %q deleted", role.Name))
 		return nil
 	},
 }

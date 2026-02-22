@@ -1,78 +1,63 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 
-	"github.com/charmbracelet/huh"
+	"github.com/envcrypts/envcrypt-cli/internal/tui"
 	"github.com/spf13/cobra"
 )
 
 var loginCmd = &cobra.Command{
-	Use:   "login",
-	Short: "Authenticate and unlock your EnvCrypt session",
-	Long: `Login unlocks your local encryption keys and authorizes access
-to encrypted environment variables without exposing plaintext secrets.`,
+	Use:          "login",
+	Short:        "Authenticate and unlock your EnvCrypt session",
+	Long:         `Login unlocks your local encryption keys and authorizes access to encrypted environment variables without exposing plaintext secrets.`,
 	SilenceUsage: true,
 
 	RunE: func(cmd *cobra.Command, args []string) error {
-		var password string
+		var fields []tui.FormField
+		var prefills []string
 
-		form := huh.NewForm(
-			huh.NewGroup(
-				huh.NewInput().
-					Title("Email").
-					Value(&email).
-					Validate(func(str string) error {
-						if str == "" {
-							return fmt.Errorf("email is required")
-						}
-						return nil
-					}),
-				huh.NewInput().
-					Title("Password").
-					Value(&password).
-					EchoMode(huh.EchoModePassword).
-					Validate(func(str string) error {
-						if str == "" {
-							return fmt.Errorf("password is required")
-						}
-						return nil
-					}),
-			),
-		)
-
-		if email != "" {
-			form = huh.NewForm(
-				huh.NewGroup(
-					huh.NewInput().
-						Title(fmt.Sprintf("Password for %s", email)).
-						Value(&password).
-						EchoMode(huh.EchoModePassword).
-						Validate(func(str string) error {
-							if str == "" {
-								return fmt.Errorf("password is required")
-							}
-							return nil
-						}),
-				),
-			)
+		if email == "" {
+			fields = []tui.FormField{
+				{Label: "Email", Required: true},
+				{Label: "Password", Secret: true, Required: true},
+			}
+			prefills = []string{"", ""}
+		} else {
+			fields = []tui.FormField{
+				{Label: fmt.Sprintf("Password for %s", email), Secret: true, Required: true},
+			}
+			prefills = []string{""}
 		}
 
-		if err := form.Run(); err != nil {
-			return Error("cancelled", nil)
+		vals, err := tui.RunForm(fields, prefills)
+		if err != nil {
+			return tui.Error("cancelled", nil)
 		}
 
-		if err := Application.Login(cmd.Context(), email, password); err != nil {
-			return Error("login failed", err)
+		var collectedEmail, password string
+		if email == "" {
+			collectedEmail = vals[0]
+			password = vals[1]
+		} else {
+			collectedEmail = email
+			password = vals[0]
 		}
 
-		Success("Login successful")
+		err = tui.RunActionWithSpinner("Authenticating...", func() error {
+			return Application.Login(context.Background(), collectedEmail, password)
+		})
+		if err != nil {
+			return tui.Error("login failed", err)
+		}
+
+		tui.Success("Login successful")
 		return nil
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(loginCmd)
-
 	loginCmd.Flags().StringVarP(&email, "email", "e", "", "Email address")
 }

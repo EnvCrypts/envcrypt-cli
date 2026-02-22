@@ -1,0 +1,105 @@
+package tui
+
+import (
+	"fmt"
+	"strings"
+
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+)
+
+var (
+	pickerSelectedStyle = lipgloss.NewStyle().
+				Foreground(lipgloss.Color("0")).
+				Background(ColorPrimary).
+				PaddingLeft(1).PaddingRight(1)
+	pickerItemStyle = lipgloss.NewStyle().PaddingLeft(3)
+)
+
+type pickerModel struct {
+	title  string
+	items  []string
+	cursor int
+	chosen string
+	abort  bool
+}
+
+func (m pickerModel) Init() tea.Cmd { return nil }
+
+func (m pickerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "ctrl+c", "esc", "q":
+			m.abort = true
+			return m, tea.Quit
+		case "up", "k":
+			if m.cursor > 0 {
+				m.cursor--
+			}
+		case "down", "j":
+			if m.cursor < len(m.items)-1 {
+				m.cursor++
+			}
+		case "enter":
+			m.chosen = m.items[m.cursor]
+			return m, tea.Quit
+		}
+	}
+	return m, nil
+}
+
+func (m pickerModel) View() string {
+	if m.chosen != "" || m.abort {
+		return ""
+	}
+	var b strings.Builder
+	b.WriteString(fmt.Sprintf("\n  %s\n\n", activeStyle.Render(m.title)))
+	for i, item := range m.items {
+		if i == m.cursor {
+			b.WriteString("  " + pickerSelectedStyle.Render(item) + "\n")
+		} else {
+			b.WriteString(pickerItemStyle.Render(item) + "\n")
+		}
+	}
+	b.WriteString(fmt.Sprintf("\n  %s\n", StyleMuted.Render("↑/↓ to navigate  •  enter to select  •  esc to cancel")))
+	return b.String()
+}
+
+// RunPicker presents a keyboard-navigable list. Returns the chosen item or an error if cancelled.
+func RunPicker(title string, items []string) (string, error) {
+	if len(items) == 0 {
+		return "", fmt.Errorf("no items to pick from")
+	}
+	p := tea.NewProgram(pickerModel{title: title, items: items})
+	result, err := p.Run()
+	if err != nil {
+		return "", err
+	}
+	final, ok := result.(pickerModel)
+	if !ok || final.abort {
+		return "", fmt.Errorf("cancelled")
+	}
+	return final.chosen, nil
+}
+
+// RunEnvPicker shows a picker for common environment names with an "Other..."
+// option that falls through to a free-text prompt for custom values.
+func RunEnvPicker(projectName string) (string, error) {
+	const other = "Other..."
+	picked, err := RunPicker(
+		fmt.Sprintf("Select environment for %q", projectName),
+		[]string{"dev", "staging", "prod", other},
+	)
+	if err != nil {
+		return "", err
+	}
+	if picked != other {
+		return picked, nil
+	}
+	vals, err := RunForm([]FormField{{Label: "Environment name", Required: true}}, []string{""})
+	if err != nil {
+		return "", err
+	}
+	return vals[0], nil
+}

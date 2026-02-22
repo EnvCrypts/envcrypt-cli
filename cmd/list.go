@@ -1,5 +1,7 @@
 package cmd
 
+import "github.com/envcrypts/envcrypt-cli/internal/tui"
+
 import "github.com/spf13/cobra"
 
 var listCmd = &cobra.Command{
@@ -14,7 +16,7 @@ var listCmd = &cobra.Command{
 			return err
 		}
 
-		PrintProjects(projectResp.Projects)
+		tui.RunProjectsTable(projectResp.Projects)
 		return nil
 	},
 }

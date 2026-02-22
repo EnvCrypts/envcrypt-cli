@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"github.com/envcrypts/envcrypt-cli/internal/tui"
+
 	"encoding/base64"
 	"fmt"
 	"os"
@@ -29,10 +31,10 @@ Example:
 
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if ciOIDCToken == "" {
-			return Error("--oidc-token is required", nil)
+			return tui.Error("--oidc-token is required", nil)
 		}
 		if ciEnv == "" {
-			return Error("--env is required", nil)
+			return tui.Error("--env is required", nil)
 		}
 
 		outputPath := ciOutput
@@ -40,28 +42,28 @@ Example:
 			outputPath = ".env"
 		}
 
-		Info(fmt.Sprintf("Environment: %s", ciEnv))
+		tui.Info(fmt.Sprintf("Environment: %s", ciEnv))
 
 		sessionID, projectID, err := Application.GetSessionID(cmd.Context(), ciOIDCToken)
 		if err != nil {
-			return Error("OIDC authentication failed", err)
+			return tui.Error("OIDC authentication failed", err)
 		}
 
-		Info("OIDC authentication successful")
+		tui.Info("OIDC authentication successful")
 
 		keysResp, err := Application.GetServiceRoleProjectKeys(cmd.Context(), *projectID, *sessionID, ciEnv)
 		if err != nil {
-			return Error("failed to get project keys", err)
+			return tui.Error("failed to get project keys", err)
 		}
 
 		privateKeyB64 := os.Getenv("ENVCRYPT_SERVICE_ROLE_PRIVATE_KEY")
 		if privateKeyB64 == "" {
-			return Error("ENVCRYPT_SERVICE_ROLE_PRIVATE_KEY environment variable is required", nil)
+			return tui.Error("ENVCRYPT_SERVICE_ROLE_PRIVATE_KEY environment variable is required", nil)
 		}
 
 		privateKey, err := base64.StdEncoding.DecodeString(privateKeyB64)
 		if err != nil {
-			return Error("failed to decode service role private key", err)
+			return tui.Error("failed to decode service role private key", err)
 		}
 
 		wrappedKey := &cryptoutils.WrappedKey{
@@ -72,30 +74,30 @@ Example:
 
 		prk, err := cryptoutils.UnwrapPRK(wrappedKey, privateKey)
 		if err != nil {
-			return Error("failed to unwrap project key", err)
+			return tui.Error("failed to unwrap project key", err)
 		}
 
 		envMap, err := Application.PullEnvForCI(cmd.Context(), *projectID, ciEnv, prk)
 		if err != nil {
-			return Error("failed to pull environment variables", err)
+			return tui.Error("failed to pull environment variables", err)
 		}
 
 		if len(envMap) == 0 {
-			Info(fmt.Sprintf("No environment variables found for %s. Creating empty .env file.", ciEnv))
+			tui.Info(fmt.Sprintf("No environment variables found for %s. Creating empty .env file.", ciEnv))
 		}
 
-		printEnvSummary(envMap)
+		tui.PrintEnvSummary(envMap)
 
 		envBytes, err := cryptoutils.EncodeEnv(envMap)
 		if err != nil {
-			return Error("failed to encode env file", err)
+			return tui.Error("failed to encode env file", err)
 		}
 
 		if err := os.WriteFile(outputPath, envBytes, 0600); err != nil {
-			return Error("failed to write env file", fmt.Errorf("could not write to %q: %w", outputPath, err))
+			return tui.Error("failed to write env file", fmt.Errorf("could not write to %q: %w", outputPath, err))
 		}
 
-		Success(fmt.Sprintf("Pulled %d secrets to %s", len(envMap), outputPath))
+		tui.Success(fmt.Sprintf("Pulled %d secrets to %s", len(envMap), outputPath))
 		return nil
 	},
 }

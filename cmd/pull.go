@@ -1,10 +1,12 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 
 	cryptoutils "github.com/envcrypts/envcrypt-cli/internal/crypto"
+	"github.com/envcrypts/envcrypt-cli/internal/tui"
 	"github.com/spf13/cobra"
 )
 
@@ -27,13 +29,31 @@ var pullCmd = &cobra.Command{
 		if projectName == "" && len(args) == 1 {
 			projectName = args[0]
 		}
+
+		// Pick project from list if not provided
 		if projectName == "" {
-			return Error("project name is required", nil)
+			resp, err := Application.ListProjects(context.Background())
+			if err != nil {
+				return tui.Error("failed to fetch projects", err)
+			}
+			names := make([]string, len(resp.Projects))
+			for i, p := range resp.Projects {
+				names[i] = p.Name
+			}
+			projectName, err = tui.RunPicker("Select a project to pull from", names)
+			if err != nil {
+				return tui.Error("cancelled", nil)
+			}
 		}
 
+		// Pick env if not provided via flag
 		envName := pullEnvName
 		if envName == "" {
-			envName = "dev"
+			picked, err := tui.RunEnvPicker(projectName)
+			if err != nil {
+				return tui.Error("cancelled", nil)
+			}
+			envName = picked
 		}
 
 		envPath := pullEnvFile
@@ -41,51 +61,46 @@ var pullCmd = &cobra.Command{
 			envPath = ".env"
 		}
 
-		Info("Project: " + projectName)
-		Info("Environment: " + envName)
+		tui.Info("Project: " + projectName)
+		tui.Info("Environment: " + envName)
 
 		if fileExists(envPath) && !pullYes {
-			if !ConfirmOverwrite(envPath) {
+			if !tui.ConfirmOverwrite(envPath) {
 				return nil
 			}
 		}
 
-		envMap, err := Application.PullEnv(
-			cmd.Context(),
-			projectName,
-			envName,
+		var envMap map[string]string
+		err := tui.RunActionWithSpinner(
+			fmt.Sprintf("Pulling %s/%s...", projectName, envName),
+			func() error {
+				var e error
+				envMap, e = Application.PullEnv(cmd.Context(), projectName, envName)
+				return e
+			},
 		)
 		if err != nil {
-			return Error("failed to pull environment variables", err)
+			return tui.Error("failed to pull environment variables", err)
 		}
 
 		if len(envMap) == 0 {
-			Info(fmt.Sprintf("No environment variables found for %s. Creating empty .env file.", envName))
+			tui.Info(fmt.Sprintf("No environment variables found for %s. Creating empty .env file.", envName))
 		}
 
-		printEnvSummary(envMap)
+		tui.PrintEnvSummary(envMap)
 
 		envBytes, err := cryptoutils.EncodeEnv(envMap)
 		if err != nil {
-			return Error("failed to encode env file", err)
+			return tui.Error("failed to encode env file", err)
 		}
 
 		if err := os.WriteFile(envPath, envBytes, 0600); err != nil {
-			return Error(
+			return tui.Error(
 				"failed to write env file",
-				fmt.Errorf("could not write to %q: %w", envPath, err),
-			)
+				fmt.Errorf("could not write to %q: %w", envPath, err))
 		}
 
-		Success(
-			fmt.Sprintf(
-				"Pulled environment variables to %s/%s (%s)",
-				projectName,
-				envName,
-				envPath,
-			),
-		)
-
+		tui.Success(fmt.Sprintf("Pulled %s/%s → %s", projectName, envName, envPath))
 		return nil
 	},
 }
@@ -94,7 +109,7 @@ func init() {
 	rootCmd.AddCommand(pullCmd)
 
 	pullCmd.Flags().StringVar(&pullProject, "project", "", "Project name")
-	pullCmd.Flags().StringVar(&pullEnvName, "env", "dev", "Environment name (dev, staging, prod)")
+	pullCmd.Flags().StringVar(&pullEnvName, "env", "", "Environment name (dev, staging, prod)")
 	pullCmd.Flags().StringVarP(&pullEnvFile, "env-file", "e", "", "Path to write .env file (default: ./.env)")
 	pullCmd.Flags().BoolVarP(&pullYes, "yes", "y", false, "Skip confirmation when overwriting .env file")
 }

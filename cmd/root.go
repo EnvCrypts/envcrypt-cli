@@ -12,8 +12,8 @@ var Version = "dev"
 
 var rootCmd = &cobra.Command{
 	Version: Version,
-	Use:   "envcrypt",
-	Short: "Zero-trust, end-to-end encrypted environment variable management.",
+	Use:     "envcrypt",
+	Short:   "Zero-trust, end-to-end encrypted environment variable management.",
 	Long: lipgloss.NewStyle().
 		MarginLeft(1).
 		MarginRight(1).

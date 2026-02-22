@@ -1,12 +1,13 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strconv"
 
-	"github.com/charmbracelet/huh"
 	cryptoutils "github.com/envcrypts/envcrypt-cli/internal/crypto"
+	"github.com/envcrypts/envcrypt-cli/internal/tui"
 	"github.com/spf13/cobra"
 )
 
@@ -16,7 +17,6 @@ var (
 	showSecrets bool
 )
 
-// diffCmd represents the diff command
 var diffCmd = &cobra.Command{
 	Use:   "diff [old_version] [new_version]",
 	Short: "Diff two environment versions",
@@ -26,113 +26,92 @@ If version numbers are not provided, an interactive prompt will allow you to sel
 
 Use --show-secrets to reveal the actual values in the diff output.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// 1. Resolve Project and Env
 		projectName := diffProject
 		envName := diffEnv
 
-		// Prompt for Project if missing
+		// Pick project from list if not provided
 		if projectName == "" {
-			form := huh.NewForm(
-				huh.NewGroup(
-					huh.NewInput().
-						Title("Project Name").
-						Value(&projectName).
-						Validate(func(str string) error {
-							if str == "" {
-								return fmt.Errorf("project name is required")
-							}
-							return nil
-						}),
-				),
-			)
-			if err := form.Run(); err != nil {
-				return Error("cancelled", nil)
+			resp, err := Application.ListProjects(context.Background())
+			if err != nil {
+				return tui.Error("failed to fetch projects", err)
+			}
+			names := make([]string, len(resp.Projects))
+			for i, p := range resp.Projects {
+				names[i] = p.Name
+			}
+			projectName, err = tui.RunPicker("Select a project", names)
+			if err != nil {
+				return tui.Error("cancelled", nil)
 			}
 		}
 
-		// Prompt for Env if missing
+		// Pick env if not provided via flag
 		if envName == "" {
-			form := huh.NewForm(
-				huh.NewGroup(
-					huh.NewInput().
-						Title("Environment Name").
-						Value(&envName).
-						Validate(func(str string) error {
-							if str == "" {
-								return fmt.Errorf("environment name is required")
-							}
-							return nil
-						}),
-				),
-			)
-			if err := form.Run(); err != nil {
-				return Error("cancelled", nil)
+			picked, err := tui.RunEnvPicker(projectName)
+			if err != nil {
+				return tui.Error("cancelled", nil)
 			}
+			envName = picked
 		}
 
-		// 2. Fetch all versions
+		// Fetch all versions
 		versions, err := Application.PullAllEnv(cmd.Context(), projectName, envName)
 		if err != nil {
-			return Error("failed to fetch environment versions", err)
+			return tui.Error("failed to fetch environment versions", err)
 		}
-
 		if len(versions) == 0 {
-			return Error("no versions found for this environment", nil)
+			return tui.Error("no versions found for this environment", nil)
 		}
 
-		// Sort versions by version number (descending)
 		sort.Slice(versions, func(i, j int) bool {
 			return versions[i].Version > versions[j].Version
 		})
 
 		var oldVer, newVer int
 
-		// 3. Determine versions to compare
 		if len(args) == 2 {
 			v1, err := strconv.Atoi(args[0])
 			if err != nil {
-				return Error("invalid old version number", err)
+				return tui.Error("invalid old version number", err)
 			}
 			v2, err := strconv.Atoi(args[1])
 			if err != nil {
-				return Error("invalid new version number", err)
+				return tui.Error("invalid new version number", err)
 			}
-			oldVer = v1
-			newVer = v2
+			oldVer, newVer = v1, v2
 		} else {
-			// Interactive selection
-			options := make([]huh.Option[int], len(versions))
+			// Build version labels for picker
+			labels := make([]string, len(versions))
 			for i, v := range versions {
-				// Show "Current" for the latest version
 				label := fmt.Sprintf("v%d", v.Version)
 				if i == 0 {
-					label += " (Current)"
+					label += "  (Current)"
 				}
-				options[i] = huh.NewOption(label, int(v.Version))
+				labels[i] = label
 			}
 
-			form := huh.NewForm(
-				huh.NewGroup(
-					huh.NewSelect[int]().
-						Title("Base Version (Old)").
-						Options(options...).
-						Value(&oldVer),
-					huh.NewSelect[int]().
-						Title("Target Version (New)").
-						Options(options...).
-						Value(&newVer),
-				),
-			)
+			oldLabel, err := tui.RunPicker("Base version (old)", labels)
+			if err != nil {
+				return tui.Error("cancelled", nil)
+			}
+			newLabel, err := tui.RunPicker("Target version (new)", labels)
+			if err != nil {
+				return tui.Error("cancelled", nil)
+			}
 
-			if err := form.Run(); err != nil {
-				return Error("cancelled", nil)
+			// Map label back to version number
+			for i, v := range versions {
+				if labels[i] == oldLabel {
+					oldVer = int(v.Version)
+				}
+				if labels[i] == newLabel {
+					newVer = int(v.Version)
+				}
 			}
 		}
 
-		// 4. Find the actual maps
 		var oldMap, newMap map[string]string
 		foundOld, foundNew := false, false
-
 		for _, v := range versions {
 			if int(v.Version) == oldVer {
 				oldMap = v.Env
@@ -145,18 +124,14 @@ Use --show-secrets to reveal the actual values in the diff output.`,
 		}
 
 		if !foundOld {
-			return Error(fmt.Sprintf("version %d not found", oldVer), nil)
+			return tui.Error(fmt.Sprintf("version %d not found", oldVer), nil)
 		}
 		if !foundNew {
-			return Error(fmt.Sprintf("version %d not found", newVer), nil)
+			return tui.Error(fmt.Sprintf("version %d not found", newVer), nil)
 		}
 
-		// 5. Compute Diff
 		diff := cryptoutils.DiffEnvVersions(oldMap, newMap)
-
-		// 6. Render Output
-		renderDiff(diff, oldMap, newMap, showSecrets)
-
+		tui.RenderDiff(diff, oldMap, newMap, showSecrets)
 		return nil
 	},
 }

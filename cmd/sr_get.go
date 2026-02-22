@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"github.com/envcrypts/envcrypt-cli/internal/tui"
+
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -12,7 +14,7 @@ var serviceRoleGetCmd = &cobra.Command{
 	Short:        "Show one service role",
 	Args:         cobra.MaximumNArgs(1),
 	SilenceUsage: true,
-	
+
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var repoPrincipal string
 		if len(args) > 0 {
@@ -21,7 +23,7 @@ var serviceRoleGetCmd = &cobra.Command{
 
 		if repoPrincipal == "" {
 			defPrincipal, _, _, _ := DetectGitContext()
-			repoPrincipal = PromptWithDefault("Service Role Principal", defPrincipal)
+			repoPrincipal = tui.PromptWithDefault("Service Role Principal", defPrincipal)
 		}
 
 		if repoPrincipal == "" {
@@ -33,7 +35,7 @@ var serviceRoleGetCmd = &cobra.Command{
 			return err
 		}
 
-		PrintServiceRoleDetail(role)
+		tui.PrintServiceRoleDetail(role)
 
 		return nil
 	},

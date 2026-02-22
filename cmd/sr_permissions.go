@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"github.com/envcrypts/envcrypt-cli/internal/tui"
+
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -21,7 +23,7 @@ var serviceRolePermissionsCmd = &cobra.Command{
 
 		if repoPrincipal == "" {
 			defPrincipal, _, _, _ := DetectGitContext()
-			repoPrincipal = PromptWithDefault("Service Role Principal", defPrincipal)
+			repoPrincipal = tui.PromptWithDefault("Service Role Principal", defPrincipal)
 		}
 
 		if repoPrincipal == "" {
@@ -33,7 +35,7 @@ var serviceRolePermissionsCmd = &cobra.Command{
 			return err
 		}
 
-		PrintServiceRolePermissions(perm, repoPrincipal)
+		tui.PrintServiceRolePermissions(perm, repoPrincipal)
 
 		return nil
 	},

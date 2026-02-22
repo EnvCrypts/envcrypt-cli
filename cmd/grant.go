@@ -1,6 +1,12 @@
 package cmd
 
-import "github.com/spf13/cobra"
+import (
+	"context"
+	"fmt"
+
+	"github.com/envcrypts/envcrypt-cli/internal/tui"
+	"github.com/spf13/cobra"
+)
 
 var (
 	grantProject string
@@ -20,15 +26,42 @@ var grantCmd = &cobra.Command{
 			projectName = args[0]
 		}
 
+		// Pick project from list if not provided
 		if projectName == "" {
-			return Error("project name is required", nil)
+			resp, err := Application.ListProjects(context.Background())
+			if err != nil {
+				return tui.Error("failed to fetch projects", err)
+			}
+			names := make([]string, len(resp.Projects))
+			for i, p := range resp.Projects {
+				names[i] = p.Name
+			}
+			projectName, err = tui.RunPicker("Select a project to grant access on", names)
+			if err != nil {
+				return tui.Error("cancelled", nil)
+			}
+		}
+
+		// Prompt for email if not provided
+		if grantEmail == "" {
+			vals, err := tui.RunForm([]tui.FormField{
+				{Label: fmt.Sprintf("Email to grant on %q", projectName), Required: true},
+			}, []string{""})
+			if err != nil {
+				return tui.Error("cancelled", nil)
+			}
+			grantEmail = vals[0]
+		}
+
+		if grantEmail == "" {
+			return tui.Error("email is required", nil)
 		}
 
 		if err := Application.GiveAccess(cmd.Context(), projectName, grantEmail); err != nil {
-			return Error("failed to grant access", err)
+			return tui.Error("failed to grant access", err)
 		}
 
-		Success("Granted access for " + grantEmail + " on project " + projectName)
+		tui.Success("Granted access for " + grantEmail + " on project " + projectName)
 		return nil
 	},
 }
@@ -38,5 +71,4 @@ func init() {
 
 	grantCmd.Flags().StringVar(&grantProject, "project", "", "Project name")
 	grantCmd.Flags().StringVar(&grantEmail, "email", "", "Email address of the user")
-	grantCmd.MarkFlagRequired("email")
 }

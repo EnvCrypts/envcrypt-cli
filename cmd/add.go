@@ -1,10 +1,10 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 
-
-	"github.com/charmbracelet/huh"
+	"github.com/envcrypts/envcrypt-cli/internal/tui"
 	"github.com/spf13/cobra"
 )
 
@@ -26,53 +26,42 @@ var addCmd = &cobra.Command{
 			projectName = args[0]
 		}
 
-		needsPrompt := projectName == "" || addEmail == ""
-
-		if needsPrompt {
-			var fields []huh.Field
-
-			if projectName == "" {
-				fields = append(fields, huh.NewInput().
-					Title("Project Name").
-					Value(&projectName).
-					Validate(func(str string) error {
-						if str == "" {
-							return fmt.Errorf("project name is required")
-						}
-						return nil
-					}))
-			}
-
-			if addEmail == "" {
-				fields = append(fields, huh.NewInput().
-					Title("Member Email").
-					Value(&addEmail).
-					Validate(func(str string) error {
-						if str == "" {
-							return fmt.Errorf("email is required")
-						}
-						return nil
-					}))
-			}
-
-			form := huh.NewForm(huh.NewGroup(fields...))
-			if err := form.Run(); err != nil {
-				return Error("cancelled", nil)
-			}
-		}
-
+		// Pick project from list if not provided
 		if projectName == "" {
-			return Error("project name is required", nil)
+			resp, err := Application.ListProjects(context.Background())
+			if err != nil {
+				return tui.Error("failed to fetch projects", err)
+			}
+			names := make([]string, len(resp.Projects))
+			for i, p := range resp.Projects {
+				names[i] = p.Name
+			}
+			projectName, err = tui.RunPicker("Select a project", names)
+			if err != nil {
+				return tui.Error("cancelled", nil)
+			}
 		}
+
+		// Prompt for email if not provided
 		if addEmail == "" {
-			return Error("email is required", nil)
+			vals, err := tui.RunForm([]tui.FormField{
+				{Label: fmt.Sprintf("Member Email for %q", projectName), Required: true},
+			}, []string{""})
+			if err != nil {
+				return tui.Error("cancelled", nil)
+			}
+			addEmail = vals[0]
 		}
 
-	if err := Application.AddUserToProject(cmd.Context(), addEmail, projectName); err != nil {
-			return Error("failed to add member", err)
+		if addEmail == "" {
+			return tui.Error("email is required", nil)
 		}
 
-		Success("Added " + addEmail + " to project " + projectName)
+		if err := Application.AddUserToProject(cmd.Context(), addEmail, projectName); err != nil {
+			return tui.Error("failed to add member", err)
+		}
+
+		tui.Success("Added " + addEmail + " to project " + projectName)
 		return nil
 	},
 }

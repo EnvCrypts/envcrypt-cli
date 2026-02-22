@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"github.com/envcrypts/envcrypt-cli/internal/tui"
+
 	"context"
 	"fmt"
 
@@ -33,10 +35,10 @@ Example:
 
 			// If user didn't provide repo/branch via flags, prompt them
 			if repo == "" {
-				repo = PromptWithDefault("Repository (e.g. acme/backend)", defRepo)
+				repo = tui.PromptWithDefault("Repository (e.g. acme/backend)", defRepo)
 			}
 			if branch == "" {
-				branch = PromptWithDefault("Branch (e.g. main)", defBranch)
+				branch = tui.PromptWithDefault("Branch (e.g. main)", defBranch)
 			}
 
 			if repo == "" || branch == "" {
@@ -46,10 +48,10 @@ Example:
 			principal = buildRepoPrincipal(repo, branch)
 
 			// Show what we are about to create
-			Info(fmt.Sprintf("Creating service role for principal: %s", principal))
+			tui.Info(fmt.Sprintf("Creating service role for principal: %s", principal))
 
 			// Confirm action
-			if !ConfirmDangerousAction(fmt.Sprintf("Create service role %q?", name), "yes") {
+			if !tui.ConfirmDangerousAction(fmt.Sprintf("Create service role %q?", name), "yes") {
 				return fmt.Errorf("cancelled")
 			}
 		}
@@ -59,7 +61,7 @@ Example:
 			return err
 		}
 
-		PrintServiceRoleSecret(keyPair)
+		tui.PrintServiceRoleSecret(keyPair)
 
 		return nil
 	},

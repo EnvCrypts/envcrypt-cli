@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"github.com/envcrypts/envcrypt-cli/internal/tui"
+
 	"context"
 
 	"github.com/spf13/cobra"
@@ -19,7 +21,7 @@ var serviceRoleListCmd = &cobra.Command{
 			return err
 		}
 
-		PrintServiceRoles(serviceRoles)
+		tui.RunServiceRolesTable(serviceRoles)
 
 		return nil
 	},

@@ -6,8 +6,6 @@ import (
 	"strings"
 )
 
-
-
 func getRepoFromGit() (string, error) {
 	out, err := exec.Command("git", "remote", "get-url", "origin").Output()
 	if err != nil {
@@ -50,6 +48,6 @@ func DetectGitContext() (string, string, string, error) {
 	}
 
 	principal := buildRepoPrincipal(repo, branch)
-	
+
 	return principal, repo, branch, nil
 }

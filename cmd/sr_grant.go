@@ -1,14 +1,14 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
-	"github.com/envcrypts/envcrypt-cli/internal/config"
+	"github.com/envcrypts/envcrypt-cli/internal/tui"
 	"github.com/spf13/cobra"
 )
 
-// grant
 var serviceRoleGrantCmd = &cobra.Command{
 	Use:   "grant",
 	Short: "Grant CI access to a project/env",
@@ -26,62 +26,67 @@ Example:
 		project, _ := cmd.Flags().GetString("project")
 		env, _ := cmd.Flags().GetString("env")
 
+		// Prompt for service role if not provided
 		if roleName == "" {
 			defPrincipal, _, _, _ := DetectGitContext()
-			roleName = PromptWithDefault("Service Role Principal", defPrincipal)
-		}
-
-		if project == "" {
-			projectsResp, err := Application.ListProjects(cmd.Context())
+			vals, err := tui.RunForm([]tui.FormField{
+				{Label: "Service Role Principal", Required: true},
+			}, []string{defPrincipal})
 			if err != nil {
-				return err
+				return tui.Error("cancelled", nil)
 			}
-
-
-			var adminProjects []config.Project
-			for _, p := range projectsResp.Projects {
-				if strings.ToLower(p.Role) == "admin" {
-					adminProjects = append(adminProjects, p)
-				}
-			}
-
-			PrintProjects(adminProjects)
-			fmt.Printf("%s ", mutedStyle.Render("Enter project name:"))
-			fmt.Scanln(&project)
-
-			found := false
-			for _, p := range adminProjects {
-				if p.Name == project {
-					found = true
-					break
-				}
-			}
-			if !found {
-				return fmt.Errorf("project %q not found or access denied (admin role required)", project)
-			}
-		}
-
-		if env == "" {
-			fmt.Printf("%s ", mutedStyle.Render("Enter environment (e.g., prod, dev):"))
-			fmt.Scanln(&env)
+			roleName = vals[0]
 		}
 
 		if roleName == "" {
-			return fmt.Errorf("service-role is required (could not auto-detect)")
+			return tui.Error("service-role is required (could not auto-detect)", nil)
+		}
+
+		// Pick project from admin-only list if not provided
+		if project == "" {
+			projectsResp, err := Application.ListProjects(context.Background())
+			if err != nil {
+				return tui.Error("failed to fetch projects", err)
+			}
+
+			var adminNames []string
+			for _, p := range projectsResp.Projects {
+				if strings.EqualFold(p.Role, "admin") {
+					adminNames = append(adminNames, p.Name)
+				}
+			}
+
+			if len(adminNames) == 0 {
+				return tui.Error("no admin projects found", nil)
+			}
+
+			project, err = tui.RunPicker("Select a project (admin only)", adminNames)
+			if err != nil {
+				return tui.Error("cancelled", nil)
+			}
+		}
+
+		// Pick env if not provided
+		if env == "" {
+			picked, err := tui.RunEnvPicker(project)
+			if err != nil {
+				return tui.Error("cancelled", nil)
+			}
+			env = picked
 		}
 
 		if err := Application.DelegateAccess(cmd.Context(), roleName, project, env); err != nil {
-			return err
+			return tui.Error("failed to grant access", err)
 		}
 
-		Success(fmt.Sprintf("Granted access to %q for service role %q on env %q", project, roleName, env))
+		tui.Success(fmt.Sprintf("Granted %s/%s access to service role %q", project, env, roleName))
 		return nil
 	},
 }
 
 func init() {
-	serviceRoleGrantCmd.Flags().String("service-role", "", "Service role name (required)")
-	serviceRoleGrantCmd.Flags().String("project", "", "Project name (required)")
-	serviceRoleGrantCmd.Flags().String("env", "", "Environment name (required)")
+	serviceRoleGrantCmd.Flags().String("service-role", "", "Service role name")
+	serviceRoleGrantCmd.Flags().String("project", "", "Project name")
+	serviceRoleGrantCmd.Flags().String("env", "", "Environment name")
 	serviceRoleCmd.AddCommand(serviceRoleGrantCmd)
 }

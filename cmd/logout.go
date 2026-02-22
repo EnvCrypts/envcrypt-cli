@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 
+	"github.com/envcrypts/envcrypt-cli/internal/tui"
 	"github.com/spf13/cobra"
 )
 
@@ -17,11 +18,19 @@ re-authenticating.`,
 	SilenceUsage: true,
 
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if err := Application.Logout(context.Background(), email); err != nil {
-			return Error("not logged in", err)
+		if !tui.ConfirmDangerousAction("Are you sure you want to logout? You will lose access to decrypt envs until you login again.", "yes") {
+			return nil
 		}
 
-		Success("Logged out successfully")
+		err := tui.RunActionWithSpinner("Logging out...", func() error {
+			return Application.Logout(context.Background(), email)
+		})
+		
+		if err != nil {
+			return tui.Error("not logged in", err)
+		}
+
+		tui.Success("Logged out successfully")
 		return nil
 	},
 }
