@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"os"
+	"strings"
 
 	cryptoutils "github.com/envcrypts/envcrypt-cli/internal/crypto"
 	"github.com/spf13/cobra"
@@ -98,6 +99,24 @@ Example:
 		}
 
 		tui.Success(fmt.Sprintf("Pulled %d secrets to %s", len(envMap), outputPath))
+
+		
+		if githubEnv := os.Getenv("GITHUB_ENV"); githubEnv != "" {
+			f, err := os.OpenFile(githubEnv, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+			if err == nil {
+				defer f.Close()
+				for k, v := range envMap {
+					if strings.Contains(v, "\n") {
+						delimiter := "EOF"
+						fmt.Fprintf(f, "%s<<%s\n%s\n%s\n", k, delimiter, v, delimiter)
+					} else {
+						fmt.Fprintf(f, "%s=%s\n", k, v)
+					}
+				}
+				tui.Success("Injected secrets into GITHUB_ENV")
+			}
+		}
+
 		return nil
 	},
 }
