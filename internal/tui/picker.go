@@ -66,8 +66,7 @@ func (m pickerModel) View() string {
 	return b.String()
 }
 
-// RunPicker presents a keyboard-navigable list in interactive terminals.
-// In non-interactive environments it returns an error directing the user to use flags.
+
 func RunPicker(title string, items []string) (string, error) {
 	if len(items) == 0 {
 		return "", fmt.Errorf("no items to pick from")
@@ -87,8 +86,7 @@ func RunPicker(title string, items []string) (string, error) {
 	return final.chosen, nil
 }
 
-// RunEnvPicker shows a picker for common environment names with an "Other..."
-// option that falls through to a free-text prompt for custom values.
+
 func RunEnvPicker(projectName string) (string, error) {
 	const other = "Other..."
 	picked, err := RunPicker(

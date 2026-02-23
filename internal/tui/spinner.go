@@ -54,8 +54,7 @@ func (m spinnerModel) View() string {
 	return fmt.Sprintf("\n %s %s\n\n", m.spinner.View(), lipgloss.NewStyle().Foreground(lipgloss.Color("252")).Render(m.title))
 }
 
-// RunActionWithSpinner runs action in the background while showing a spinner.
-// In non-interactive environments the spinner is suppressed and the action runs directly.
+
 func RunActionWithSpinner(title string, action func() error) error {
 	if !IsInteractive() {
 		return action()

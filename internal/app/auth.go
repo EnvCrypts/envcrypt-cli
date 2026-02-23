@@ -50,6 +50,16 @@ func (app *App) Login(ctx context.Context, email, password string) error {
 		return err
 	}
 
+	err = cryptoutils.SaveAccessToken(responseBody.Session.AccessToken.String())
+	if err != nil {
+		return err
+	}
+
+	err = cryptoutils.SaveRefreshToken(responseBody.Session.RefreshToken.String())
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -90,6 +100,16 @@ func (app *App) Register(ctx context.Context, email, password string) error {
 		return err
 	}
 
+	err = cryptoutils.SaveAccessToken(responseBody.Session.AccessToken.String())
+	if err != nil {
+		return err
+	}
+
+	err = cryptoutils.SaveRefreshToken(responseBody.Session.RefreshToken.String())
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -120,6 +140,14 @@ func (app *App) Logout(ctx context.Context, email string) error {
 	}
 
 	if err := cryptoutils.RemoveUserId(); err != nil {
+		errs = append(errs, err)
+	}
+
+	if err := cryptoutils.RemoveAccessToken(); err != nil {
+		errs = append(errs, err)
+	}
+
+	if err := cryptoutils.RemoveRefreshToken(); err != nil {
 		errs = append(errs, err)
 	}
 

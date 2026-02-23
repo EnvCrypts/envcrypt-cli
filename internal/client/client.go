@@ -15,16 +15,19 @@ import (
 )
 
 type Client struct {
-	baseUrl     string
-	http        *http.Client
-	accessToken uuid.UUID
+	baseUrl string
+	http    *http.Client
 }
 
 func NewClient(baseUrl string, client *http.Client) *Client {
-	return &Client{
+	c := &Client{
 		baseUrl: baseUrl,
 		http:    client,
 	}
+
+
+
+	return c
 }
 
 type ErrorResponse struct {
@@ -89,7 +92,8 @@ func (c *Client) doOnce(
 	req.Header.Set("Content-Type", "application/json")
 
 	if protected {
-		req.Header.Set("X-Session-ID", c.accessToken.String())
+		token := viper.GetString("user.access_token")
+		req.Header.Set("X-Session-ID", token)
 	}
 
 	resp, err := c.http.Do(req)
@@ -134,8 +138,13 @@ func (c *Client) Refresh(ctx context.Context) error {
 		return err
 	}
 
-	c.accessToken = resp.Session.AccessToken
+
 	err = cryptoutils.SaveRefreshToken(resp.Session.RefreshToken.String())
+	if err != nil {
+		return err
+	}
+
+	err = cryptoutils.SaveAccessToken(resp.Session.AccessToken.String())
 	if err != nil {
 		return err
 	}

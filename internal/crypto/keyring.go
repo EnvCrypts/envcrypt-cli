@@ -98,3 +98,27 @@ func RemoveUserId() error {
 	viper.Set("user.id", "")
 	return viper.WriteConfig()
 }
+
+func SaveAccessToken(accessToken string) error {
+	viper.Set("user.access_token", accessToken)
+	dir, err := os.UserConfigDir()
+	if err != nil {
+		return err
+	}
+	appDir := filepath.Join(dir, "envcrypt")
+	path := filepath.Join(appDir, "config.yaml")
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return viper.WriteConfigAs(path)
+	}
+	return viper.WriteConfig()
+}
+
+func RemoveAccessToken() error {
+	viper.Set("user.access_token", "")
+	return viper.WriteConfig()
+}
+
+func RemoveRefreshToken() error {
+	viper.Set("user.refresh_token", "")
+	return viper.WriteConfig()
+}

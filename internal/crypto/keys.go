@@ -94,11 +94,6 @@ func DecryptPrivateKey(
 		nil,
 	)
 	if err != nil {
-		// This error covers:
-		// - wrong password
-		// - corrupted ciphertext
-		// - wrong nonce
-		// - tampering
 		return nil, err
 	}
 

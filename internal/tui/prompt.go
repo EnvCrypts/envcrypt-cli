@@ -76,8 +76,7 @@ func ConfirmOverwrite(path string) bool {
 	return ConfirmDangerousAction(fmt.Sprintf("Overwrite %q?", path), "yes")
 }
 
-// PromptWithDefault shows a single-field form pre-filled with defaultVal.
-// In non-interactive environments it returns defaultVal unchanged.
+
 func PromptWithDefault(label, defaultVal string) string {
 	if !IsInteractive() {
 		return defaultVal

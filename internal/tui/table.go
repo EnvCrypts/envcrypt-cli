@@ -66,8 +66,6 @@ func runTable(t table.Model) error {
 	return err
 }
 
-// RunProjectsTable renders an interactive bubbletea table of projects.
-// Falls back to plain-text output in non-interactive environments.
 func RunProjectsTable(projects []config.Project) error {
 	if len(projects) == 0 {
 		fmt.Println(StyleMuted.Render("No projects found."))
@@ -101,8 +99,7 @@ func RunProjectsTable(projects []config.Project) error {
 	}, rows))
 }
 
-// RunServiceRolesTable renders an interactive bubbletea table of service roles.
-// Falls back to plain-text output in non-interactive environments.
+
 func RunServiceRolesTable(roles []config.ServiceRole) error {
 	if len(roles) == 0 {
 		fmt.Println(StyleMuted.Render("No service roles found."))

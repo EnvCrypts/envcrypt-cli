@@ -149,18 +149,6 @@ func UnwrapPRK(
 		return nil, errors.New("invalid user private key length")
 	}
 
-	//fmt.Printf("EphemeralPub (%d): %x\n", len(wrapped.WrapEphemeralPub), wrapped.WrapEphemeralPub)
-	//fmt.Printf("UserPriv (%d): %x\n", len(userPrivateKey), userPrivateKey)
-	//
-	//sharedSecret, _ := X25519SharedSecret(userPrivateKey, wrapped.WrapEphemeralPub)
-	//fmt.Printf("SharedSecret (%d): %x\n", len(sharedSecret), sharedSecret)
-	//
-	//wrapKey, _ := DeriveWrapKey(sharedSecret)
-	//fmt.Printf("WrapKey (%d): %x\n", len(wrapKey), wrapKey)
-	//
-	//fmt.Printf("Nonce (%d): %x\n", len(wrapped.WrapNonce), wrapped.WrapNonce)
-	//fmt.Printf("Ciphertext (%d): %x\n", len(wrapped.WrappedPRK), wrapped.WrappedPRK)
-
 	// 1. Derive shared secret
 	sharedSecret, err := X25519SharedSecret(
 		userPrivateKey,

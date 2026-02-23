@@ -123,8 +123,7 @@ func (m formModel) values() []string {
 	return vals
 }
 
-// RunForm runs a bubbletea multi-field form in interactive terminals.
-// In non-interactive environments it returns an error directing the user to use flags.
+
 func RunForm(fields []FormField, prefills []string) ([]string, error) {
 	if !IsInteractive() {
 		return nil, fmt.Errorf("not a terminal: provide required values via flags")
