@@ -11,7 +11,11 @@ import (
 var loginCmd = &cobra.Command{
 	Use:          "login",
 	Short:        "Authenticate and unlock your EnvCrypt session",
-	Long:         `Login unlocks your local encryption keys and authorizes access to encrypted environment variables without exposing plaintext secrets.`,
+	Long: `Login unlocks your local encryption keys and authorizes access to encrypted environment variables without exposing plaintext secrets.
+
+Examples:
+  envcrypt login
+  envcrypt login --email user@example.com`,
 	SilenceUsage: true,
 
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -20,7 +24,7 @@ var loginCmd = &cobra.Command{
 
 		if email == "" {
 			fields = []tui.FormField{
-				{Label: "Email", Required: true},
+				{Label: "Email", Required: true, Validate: tui.ValidateEmail},
 				{Label: "Password", Secret: true, Required: true},
 			}
 			prefills = []string{"", ""}
@@ -33,7 +37,7 @@ var loginCmd = &cobra.Command{
 
 		vals, err := tui.RunForm(fields, prefills)
 		if err != nil {
-			return tui.Error("cancelled", nil)
+			return tui.Cancelled()
 		}
 
 		var collectedEmail, password string

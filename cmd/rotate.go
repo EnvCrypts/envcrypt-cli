@@ -17,7 +17,14 @@ var (
 var rotateCmd = &cobra.Command{
 	Use:          "rotate [project]",
 	Short:        "Rotate a project's Root Key (PRK) and rewrap Data Encryption Keys (DEKs)",
-	Long:         "Performs a client-side rotation of the Project Root Key (PRK) without exposing plaintext keys to the server.",
+	Long: `Performs a client-side rotation of the Project Root Key (PRK) without exposing plaintext keys to the server.
+
+Use --force to skip the confirmation prompt.
+
+Examples:
+  envcrypt rotate my-project
+  envcrypt rotate --force
+  envcrypt rotate`,
 	Args:         cobra.MaximumNArgs(1),
 	SilenceUsage: true,
 
@@ -52,7 +59,7 @@ var rotateCmd = &cobra.Command{
 			}
 			projectName, err = tui.RunPicker("Select a project to rotate its PRK", adminProjects)
 			if err != nil {
-				return tui.Error("cancelled", nil)
+				return tui.Cancelled()
 			}
 			for _, p := range projectsResp.Projects {
 				if p.Name == projectName {
@@ -65,10 +72,8 @@ var rotateCmd = &cobra.Command{
 			return tui.Error(fmt.Sprintf("you do not have admin access to project '%s' or it does not exist", projectName), nil)
 		}
 
-		if !rotateForce {
-			if !tui.ConfirmDangerousAction(fmt.Sprintf("Rotate PRK for project %q?", projectName), "yes") {
-				return tui.Error("cancelled", nil)
-			}
+		if !tui.ConfirmDangerousAction(fmt.Sprintf("Rotate PRK for project %q?", projectName), "yes", rotateForce) {
+			return tui.Cancelled()
 		}
 
 		var newVersion int32

@@ -2,16 +2,17 @@ package cmd
 
 import (
 	"github.com/envcrypts/envcrypt-cli/internal/tui"
-
-	"fmt"
-
 	"github.com/spf13/cobra"
 )
 
-// get
 var serviceRoleGetCmd = &cobra.Command{
-	Use:          "get <repo_identifier>",
-	Short:        "Show one service role",
+	Use:   "get <repo_identifier>",
+	Short: "Show one service role",
+	Long: `Show details of a specific service role.
+
+Examples:
+  envcrypt service-role get github:acme/backend:ref:refs/heads/main
+  envcrypt service-role get`,
 	Args:         cobra.MaximumNArgs(1),
 	SilenceUsage: true,
 
@@ -27,16 +28,15 @@ var serviceRoleGetCmd = &cobra.Command{
 		}
 
 		if repoPrincipal == "" {
-			return fmt.Errorf("service role principal is required")
+			return tui.Error("service role principal is required", nil)
 		}
 
 		role, err := Application.GetServiceRole(cmd.Context(), repoPrincipal)
 		if err != nil {
-			return err
+			return tui.Error("failed to fetch service role", err)
 		}
 
 		tui.PrintServiceRoleDetail(role)
-
 		return nil
 	},
 }

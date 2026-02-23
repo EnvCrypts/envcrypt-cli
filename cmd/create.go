@@ -11,7 +11,11 @@ import (
 var createCmd = &cobra.Command{
 	Use:          "create [project]",
 	Short:        "Create a new project",
-	Long:         "Create a new encrypted project.",
+	Long: `Create a new encrypted project.
+
+Examples:
+  envcrypt create my-project
+  envcrypt create`,
 	Args:         cobra.MaximumNArgs(1),
 	SilenceUsage: true,
 
@@ -24,10 +28,10 @@ var createCmd = &cobra.Command{
 		// Prompt for project name if not provided
 		if projectName == "" {
 			vals, err := tui.RunForm([]tui.FormField{
-				{Label: "Project Name", Required: true},
+				{Label: "Project Name", Required: true, Validate: tui.ValidateProjectName},
 			}, []string{""})
 			if err != nil {
-				return tui.Error("cancelled", nil)
+				return tui.Cancelled()
 			}
 			projectName = vals[0]
 		}

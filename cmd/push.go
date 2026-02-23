@@ -19,7 +19,12 @@ var (
 var pushCmd = &cobra.Command{
 	Use:          "push [project]",
 	Short:        "Encrypt and upload environment variables",
-	Long:         "Encrypt variables from a .env file and upload them to a project environment.",
+	Long: `Encrypt variables from a .env file and upload them to a project environment.
+
+Examples:
+  envcrypt push my-project --env prod
+  envcrypt push --project my-project --env dev --env-file .env.local
+  envcrypt push`,
 	Args:         cobra.MaximumNArgs(1),
 	SilenceUsage: true,
 
@@ -41,7 +46,7 @@ var pushCmd = &cobra.Command{
 			}
 			projectName, err = tui.RunPicker("Select a project to push to", names)
 			if err != nil {
-				return tui.Error("cancelled", nil)
+				return tui.Cancelled()
 			}
 		}
 
@@ -50,7 +55,7 @@ var pushCmd = &cobra.Command{
 		if envName == "" {
 			picked, err := tui.RunEnvPicker(projectName)
 			if err != nil {
-				return tui.Error("cancelled", nil)
+				return tui.Cancelled()
 			}
 			envName = picked
 		}

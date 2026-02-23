@@ -15,6 +15,7 @@ var (
 	rollbackProject string
 	rollbackEnv     string
 	rollbackVer     int
+	rollbackForce   bool
 )
 
 var rollbackCmd = &cobra.Command{
@@ -23,7 +24,12 @@ var rollbackCmd = &cobra.Command{
 	Long: `Rollback an environment to a specific version.
 
 This command will create a new version that is an exact copy of the specified previous version.
-You will see a diff of the changes before confirming the rollback.`,
+You will see a diff of the changes before confirming the rollback unless --force is used.
+
+Examples:
+  envcrypt rollback 3 --project my-project --env prod
+  envcrypt rollback --project my-project --env dev --force
+  envcrypt rollback`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		projectName := rollbackProject
 		envName := rollbackEnv
@@ -40,7 +46,7 @@ You will see a diff of the changes before confirming the rollback.`,
 			}
 			projectName, err = tui.RunPicker("Select a project", names)
 			if err != nil {
-				return tui.Error("cancelled", nil)
+				return tui.Cancelled()
 			}
 		}
 
@@ -48,7 +54,7 @@ You will see a diff of the changes before confirming the rollback.`,
 		if envName == "" {
 			picked, err := tui.RunEnvPicker(projectName)
 			if err != nil {
-				return tui.Error("cancelled", nil)
+				return tui.Cancelled()
 			}
 			envName = picked
 		}
@@ -102,7 +108,7 @@ You will see a diff of the changes before confirming the rollback.`,
 				labels,
 			)
 			if err != nil {
-				return tui.Error("cancelled", nil)
+				return tui.Cancelled()
 			}
 			v32 := verMap[picked]
 			targetVersion = &v32
@@ -130,7 +136,7 @@ You will see a diff of the changes before confirming the rollback.`,
 		// Show diff
 		diff := cryptoutils.DiffEnvVersions(currentVersion.Env, targetMap)
 		tui.Spacer()
-		fmt.Printf("  Rolling back %s/%s from v%d → v%d\n", projectName, envName, currentVersion.Version, *targetVersion)
+		tui.Info(fmt.Sprintf("Rolling back %s/%s from v%d → v%d", projectName, envName, currentVersion.Version, *targetVersion))
 		tui.Spacer()
 		tui.RenderDiff(diff, currentVersion.Env, targetMap, showSecrets)
 
@@ -138,9 +144,9 @@ You will see a diff of the changes before confirming the rollback.`,
 		if !tui.ConfirmDangerousAction(
 			fmt.Sprintf("Rollback %s/%s to v%d?", projectName, envName, *targetVersion),
 			"rollback",
+			rollbackForce,
 		) {
-			tui.Info("Aborted.")
-			return nil
+			return tui.Cancelled()
 		}
 
 		// Execute
@@ -165,5 +171,6 @@ func init() {
 	rollbackCmd.Flags().StringVarP(&rollbackProject, "project", "p", "", "Project name")
 	rollbackCmd.Flags().StringVarP(&rollbackEnv, "env", "e", "", "Environment name")
 	rollbackCmd.Flags().IntVarP(&rollbackVer, "version", "v", 0, "Version to rollback to")
+	rollbackCmd.Flags().BoolVar(&rollbackForce, "force", false, "Skip confirmation prompt")
 	rollbackCmd.Flags().BoolVar(&showSecrets, "show-secrets", false, "Show actual secret values in diff output")
 }

@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 
@@ -9,6 +10,12 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/envcrypts/envcrypt-cli/internal/config"
 )
+
+// noTable is set by the --no-table global flag.
+var noTable bool
+
+// SetNoTable configures table output to use plain tabular format.
+func SetNoTable(v bool) { noTable = v }
 
 var tableBaseStyle = lipgloss.NewStyle().
 	BorderStyle(lipgloss.NormalBorder()).
@@ -35,7 +42,7 @@ func (m tableModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m tableModel) View() string {
 	return "\n" + tableBaseStyle.Render(m.table.View()) +
-		"\n" + StyleMuted.Render("  ↑/↓ to navigate  •  q to quit") + "\n"
+		"\n" + StyleMuted.Render("  "+TableNavHint) + "\n"
 }
 
 func styledTable(columns []table.Column, rows []table.Row) table.Model {
@@ -68,11 +75,31 @@ func runTable(t table.Model) error {
 
 func RunProjectsTable(projects []config.Project) error {
 	if len(projects) == 0 {
+		if currentMode == ModeJSON {
+			JSONData([]any{})
+			return nil
+		}
 		fmt.Println(StyleMuted.Render("No projects found."))
 		return nil
 	}
 
-	if !IsInteractive() {
+	// JSON mode: structured output
+	if currentMode == ModeJSON {
+		rows := make([]map[string]string, len(projects))
+		for i, p := range projects {
+			status := "active"
+			if p.IsRevoked {
+				status = "revoked"
+			}
+			rows[i] = map[string]string{"project": p.Name, "role": p.Role, "status": status}
+		}
+		data, _ := json.MarshalIndent(rows, "", "  ")
+		fmt.Println(string(data))
+		return nil
+	}
+
+	// Plain mode or --no-table: tabular text
+	if !IsInteractive() || noTable {
 		fmt.Printf("%-24s  %-12s  %-10s\n", "PROJECT", "ROLE", "STATUS")
 		for _, p := range projects {
 			status := "active"
@@ -102,11 +129,27 @@ func RunProjectsTable(projects []config.Project) error {
 
 func RunServiceRolesTable(roles []config.ServiceRole) error {
 	if len(roles) == 0 {
+		if currentMode == ModeJSON {
+			JSONData([]any{})
+			return nil
+		}
 		fmt.Println(StyleMuted.Render("No service roles found."))
 		return nil
 	}
 
-	if !IsInteractive() {
+	// JSON mode
+	if currentMode == ModeJSON {
+		rows := make([]map[string]string, len(roles))
+		for i, r := range roles {
+			rows[i] = map[string]string{"name": r.Name, "repo_principal": r.RepoPrincipal}
+		}
+		data, _ := json.MarshalIndent(rows, "", "  ")
+		fmt.Println(string(data))
+		return nil
+	}
+
+	// Plain mode or --no-table
+	if !IsInteractive() || noTable {
 		fmt.Printf("%-24s  %-40s\n", "NAME", "REPO PRINCIPAL")
 		for _, r := range roles {
 			fmt.Printf("%-24s  %-40s\n", r.Name, r.RepoPrincipal)

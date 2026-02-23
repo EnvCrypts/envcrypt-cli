@@ -50,11 +50,16 @@ func (m confirmModel) View() string {
 	b.WriteString(fmt.Sprintf("\n  %s %s\n\n", IconWarn, StyleWarn.Render(m.prompt)))
 	b.WriteString(fmt.Sprintf("  %s\n", StyleMuted.Render(fmt.Sprintf(`Type "%s" to confirm:`, m.expected))))
 	b.WriteString(fmt.Sprintf("  %s%s\n", StylePrimary.Render("> "), m.input))
-	b.WriteString(fmt.Sprintf("\n  %s\n", StyleMuted.Render("enter to confirm  •  esc to cancel")))
+	b.WriteString(fmt.Sprintf("\n  %s\n", StyleMuted.Render(FormNavHint)))
 	return b.String()
 }
 
-func ConfirmDangerousAction(prompt, expected string) bool {
+// ConfirmDangerousAction prompts the user for confirmation.
+// If force is true, the confirmation is skipped.
+func ConfirmDangerousAction(prompt, expected string, force ...bool) bool {
+	if len(force) > 0 && force[0] {
+		return true
+	}
 	if !IsInteractive() {
 		Warn(fmt.Sprintf("Non-interactive: skipping confirmation for %q (use --force to override)", prompt))
 		return false

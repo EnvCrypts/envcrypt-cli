@@ -24,7 +24,12 @@ var diffCmd = &cobra.Command{
 
 If version numbers are not provided, an interactive prompt will allow you to select the versions to compare.
 
-Use --show-secrets to reveal the actual values in the diff output.`,
+Use --show-secrets to reveal the actual values in the diff output.
+
+Examples:
+  envcrypt diff 1 3 --project my-project --env prod
+  envcrypt diff --project my-project --env dev --show-secrets
+  envcrypt diff`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		projectName := diffProject
 		envName := diffEnv
@@ -41,7 +46,7 @@ Use --show-secrets to reveal the actual values in the diff output.`,
 			}
 			projectName, err = tui.RunPicker("Select a project", names)
 			if err != nil {
-				return tui.Error("cancelled", nil)
+				return tui.Cancelled()
 			}
 		}
 
@@ -49,7 +54,7 @@ Use --show-secrets to reveal the actual values in the diff output.`,
 		if envName == "" {
 			picked, err := tui.RunEnvPicker(projectName)
 			if err != nil {
-				return tui.Error("cancelled", nil)
+				return tui.Cancelled()
 			}
 			envName = picked
 		}
@@ -92,11 +97,11 @@ Use --show-secrets to reveal the actual values in the diff output.`,
 
 			oldLabel, err := tui.RunPicker("Base version (old)", labels)
 			if err != nil {
-				return tui.Error("cancelled", nil)
+				return tui.Cancelled()
 			}
 			newLabel, err := tui.RunPicker("Target version (new)", labels)
 			if err != nil {
-				return tui.Error("cancelled", nil)
+				return tui.Cancelled()
 			}
 
 			// Map label back to version number

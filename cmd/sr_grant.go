@@ -12,13 +12,14 @@ import (
 var serviceRoleGrantCmd = &cobra.Command{
 	Use:   "grant",
 	Short: "Grant CI access to a project/env",
-	Long: `Grant CI access to a project/env.
+	Long: `Grant a service role access to a specific project environment.
 
-Example:
+Examples:
   envcrypt service-role grant \
     --service-role sp-billing-backend \
     --project billing-service \
-    --env prod`,
+    --env prod
+  envcrypt service-role grant`,
 	SilenceUsage: true,
 
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -33,7 +34,7 @@ Example:
 				{Label: "Service Role Principal", Required: true},
 			}, []string{defPrincipal})
 			if err != nil {
-				return tui.Error("cancelled", nil)
+				return tui.Cancelled()
 			}
 			roleName = vals[0]
 		}
@@ -62,7 +63,7 @@ Example:
 
 			project, err = tui.RunPicker("Select a project (admin only)", adminNames)
 			if err != nil {
-				return tui.Error("cancelled", nil)
+				return tui.Cancelled()
 			}
 		}
 
@@ -70,7 +71,7 @@ Example:
 		if env == "" {
 			picked, err := tui.RunEnvPicker(project)
 			if err != nil {
-				return tui.Error("cancelled", nil)
+				return tui.Cancelled()
 			}
 			env = picked
 		}

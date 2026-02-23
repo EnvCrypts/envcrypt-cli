@@ -6,6 +6,8 @@ import (
 	"golang.org/x/term"
 )
 
+// IsInteractive returns true when the CLI should use full interactive TUI.
+// Retained for backward compatibility — delegates to the output mode system.
 func IsInteractive() bool {
-	return term.IsTerminal(int(os.Stdin.Fd()))
+	return currentMode == ModeInteractive && term.IsTerminal(int(os.Stdin.Fd()))
 }

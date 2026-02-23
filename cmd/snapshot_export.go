@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"context"
-	"net/http"
 
 	"github.com/envcrypts/envcrypt-cli/internal/client"
 	"github.com/envcrypts/envcrypt-cli/internal/tui"
@@ -12,8 +11,14 @@ import (
 var snapshotExportFilename string
 
 var snapshotExportCmd = &cobra.Command{
-	Use:   "export [project_name]",
+	Use:   "export [project]",
 	Short: "Export a project snapshot",
+	Long: `Export a complete encrypted snapshot of a project into a single JSON file.
+
+Examples:
+  envcrypt snapshot export my-project
+  envcrypt snapshot export my-project --file backup.json
+  envcrypt snapshot export`,
 	Args:  cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		projectName := ""
@@ -39,7 +44,7 @@ var snapshotExportCmd = &cobra.Command{
 
 			projectName, err = tui.RunPicker("Select a project to export", adminProjects)
 			if err != nil {
-				return tui.Error("cancelled", nil)
+				return tui.Cancelled()
 			}
 		}
 
@@ -47,7 +52,7 @@ var snapshotExportCmd = &cobra.Command{
 		if filename == "" {
 			vals, err := tui.RunForm([]tui.FormField{{Label: "Filename to export to", Required: true}}, []string{projectName + ".json"})
 			if err != nil || len(vals) == 0 || vals[0] == "" {
-				return tui.Error("cancelled", nil)
+				return tui.Cancelled()
 			}
 			filename = vals[0]
 		}
@@ -62,14 +67,11 @@ var snapshotExportCmd = &cobra.Command{
 
 		if err != nil {
 			if httpErr, ok := err.(*client.HTTPError); ok {
-				switch httpErr.Status {
-				case http.StatusBadRequest:
-					return tui.Error("Snapshot validation failed (checksum mismatch or malformed file).", nil)
-				case http.StatusForbidden:
-					return tui.Error("Permission denied.", nil)
-				case http.StatusConflict:
-					return tui.Error("Project conflict detected.", nil)
-				}
+				return tui.MapAPIError(&tui.APIErrorDetail{
+					Code:    httpErr.Code,
+					Message: httpErr.Message,
+					Hint:    httpErr.Hint,
+				})
 			}
 			return tui.Error("Failed to export snapshot", err)
 		}

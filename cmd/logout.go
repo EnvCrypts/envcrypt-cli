@@ -14,12 +14,15 @@ var logoutCmd = &cobra.Command{
 in-memory keys and clearing local authentication state.
 
 Encrypted environment variables cannot be accessed again without
-re-authenticating.`,
+re-authenticating.
+
+Examples:
+  envcrypt logout`,
 	SilenceUsage: true,
 
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if !tui.ConfirmDangerousAction("Are you sure you want to logout? You will lose access to decrypt envs until you login again.", "yes") {
-			return nil
+			return tui.Cancelled()
 		}
 
 		err := tui.RunActionWithSpinner("Logging out...", func() error {

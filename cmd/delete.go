@@ -13,7 +13,14 @@ var deleteForce bool
 var deleteCmd = &cobra.Command{
 	Use:           "delete [project]",
 	Short:         "Delete a project",
-	Long:          "Delete a project and all associated encrypted data.",
+	Long: `Delete a project and all associated encrypted data.
+
+Use --force to skip the confirmation prompt.
+
+Examples:
+  envcrypt delete my-project
+  envcrypt delete my-project --force
+  envcrypt delete`,
 	Args:          cobra.MaximumNArgs(1),
 	SilenceUsage:  true,
 	SilenceErrors: true,
@@ -36,19 +43,16 @@ var deleteCmd = &cobra.Command{
 			}
 			projectName, err = tui.RunPicker("Select a project to delete", names)
 			if err != nil {
-				return tui.Error("cancelled", nil)
+				return tui.Cancelled()
 			}
 		}
 
-		if !deleteForce {
-			ok := tui.ConfirmDangerousAction(
-				fmt.Sprintf("This will permanently delete project %q and all its data.", projectName),
-				projectName,
-			)
-			if !ok {
-				tui.Info("Aborted.")
-				return nil
-			}
+		if !tui.ConfirmDangerousAction(
+			fmt.Sprintf("This will permanently delete project %q and all its data.", projectName),
+			projectName,
+			deleteForce,
+		) {
+			return tui.Cancelled()
 		}
 
 		err := tui.RunActionWithSpinner(fmt.Sprintf("Deleting project %q...", projectName), func() error {
@@ -65,5 +69,5 @@ var deleteCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(deleteCmd)
-	deleteCmd.Flags().BoolVar(&deleteForce, "force", false, "Delete without confirmation")
+	deleteCmd.Flags().BoolVar(&deleteForce, "force", false, "Delete without confirmation prompt")
 }

@@ -20,7 +20,12 @@ var (
 var pullCmd = &cobra.Command{
 	Use:          "pull [project]",
 	Short:        "Download and decrypt environment variables",
-	Long:         "Download environment variables from a project and write them to a .env file.",
+	Long: `Download environment variables from a project and write them to a .env file.
+
+Examples:
+  envcrypt pull my-project --env prod
+  envcrypt pull --project my-project --env dev --env-file .env.local
+  envcrypt pull my-project --env prod -y`,
 	Args:         cobra.MaximumNArgs(1),
 	SilenceUsage: true,
 
@@ -42,7 +47,7 @@ var pullCmd = &cobra.Command{
 			}
 			projectName, err = tui.RunPicker("Select a project to pull from", names)
 			if err != nil {
-				return tui.Error("cancelled", nil)
+				return tui.Cancelled()
 			}
 		}
 
@@ -51,7 +56,7 @@ var pullCmd = &cobra.Command{
 		if envName == "" {
 			picked, err := tui.RunEnvPicker(projectName)
 			if err != nil {
-				return tui.Error("cancelled", nil)
+				return tui.Cancelled()
 			}
 			envName = picked
 		}
@@ -66,7 +71,7 @@ var pullCmd = &cobra.Command{
 
 		if fileExists(envPath) && !pullYes {
 			if !tui.ConfirmOverwrite(envPath) {
-				return nil
+				return tui.Cancelled()
 			}
 		}
 

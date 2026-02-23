@@ -2,6 +2,9 @@ package tui
 
 import (
 	"fmt"
+	"net/mail"
+	"os"
+	"regexp"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/cursor"
@@ -15,20 +18,23 @@ type FormField struct {
 	Label    string
 	Secret   bool
 	Required bool
+	Validate func(string) error // optional validation function
 }
 
 type formModel struct {
-	fields  []FormField
-	inputs  []textinput.Model
-	focused int
-	done    bool
-	err     error
+	fields    []FormField
+	inputs    []textinput.Model
+	focused   int
+	done      bool
+	err       error
+	validErrs []string // per-field validation error messages
 }
 
 var (
 	labelStyle  = lipgloss.NewStyle().Foreground(ColorMuted)
 	activeStyle = lipgloss.NewStyle().Foreground(ColorPrimary)
 	cursorStyle = lipgloss.NewStyle().Foreground(ColorPrimary)
+	errStyle    = lipgloss.NewStyle().Foreground(ColorError)
 )
 
 func newFormModel(fields []FormField, prefills []string) formModel {
@@ -48,7 +54,7 @@ func newFormModel(fields []FormField, prefills []string) formModel {
 		inputs[i] = t
 	}
 	inputs[0].Focus()
-	return formModel{fields: fields, inputs: inputs}
+	return formModel{fields: fields, inputs: inputs, validErrs: make([]string, len(fields))}
 }
 
 func (m formModel) Init() tea.Cmd {
@@ -60,12 +66,27 @@ func (m formModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyCtrlC, tea.KeyEsc:
-			m.err = fmt.Errorf("cancelled")
+			m.err = ErrCancelled
 			return m, tea.Quit
 		case tea.KeyEnter:
-			if m.fields[m.focused].Required && strings.TrimSpace(m.inputs[m.focused].Value()) == "" {
+			val := strings.TrimSpace(m.inputs[m.focused].Value())
+
+			// Required check
+			if m.fields[m.focused].Required && val == "" {
+				m.validErrs[m.focused] = "This field is required"
 				return m, nil
 			}
+
+			// Custom validation
+			if m.fields[m.focused].Validate != nil && val != "" {
+				if err := m.fields[m.focused].Validate(val); err != nil {
+					m.validErrs[m.focused] = err.Error()
+					return m, nil
+				}
+			}
+
+			m.validErrs[m.focused] = "" // clear any previous error
+
 			if m.focused == len(m.inputs)-1 {
 				m.done = true
 				return m, tea.Quit
@@ -90,6 +111,10 @@ func (m formModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, textinput.Blink
 		}
 	}
+
+	// Clear validation error on typing
+	m.validErrs[m.focused] = ""
+
 	var cmd tea.Cmd
 	m.inputs[m.focused], cmd = m.inputs[m.focused].Update(msg)
 	return m, cmd
@@ -107,11 +132,14 @@ func (m formModel) View() string {
 			label = activeStyle.Render(f.Label)
 		}
 		b.WriteString(fmt.Sprintf("  %s\n  %s\n", label, m.inputs[i].View()))
+		if m.validErrs[i] != "" {
+			b.WriteString(fmt.Sprintf("  %s\n", errStyle.Render("⚠ "+m.validErrs[i])))
+		}
 		if i < len(m.fields)-1 {
 			b.WriteString("\n")
 		}
 	}
-	b.WriteString(fmt.Sprintf("\n  %s\n", StyleMuted.Render("enter to confirm  •  esc to cancel")))
+	b.WriteString(fmt.Sprintf("\n  %s\n", StyleMuted.Render(FormNavHint)))
 	return b.String()
 }
 
@@ -142,4 +170,37 @@ func RunForm(fields []FormField, prefills []string) ([]string, error) {
 		return nil, final.err
 	}
 	return final.values(), nil
+}
+
+
+// --- Built-in validators ---
+
+var projectNameRegex = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_-]{1,62}[a-zA-Z0-9]$`)
+
+// ValidateEmail checks for a valid email format.
+func ValidateEmail(s string) error {
+	if _, err := mail.ParseAddress(s); err != nil {
+		return fmt.Errorf("invalid email format")
+	}
+	return nil
+}
+
+// ValidateFileExists checks that a file exists at the given path.
+func ValidateFileExists(s string) error {
+	info, err := os.Stat(s)
+	if err != nil {
+		return fmt.Errorf("file %q does not exist", s)
+	}
+	if info.IsDir() {
+		return fmt.Errorf("%q is a directory, not a file", s)
+	}
+	return nil
+}
+
+// ValidateProjectName checks that a project name follows naming rules.
+func ValidateProjectName(s string) error {
+	if !projectNameRegex.MatchString(s) {
+		return fmt.Errorf("project name must be 3-64 chars, start/end with alphanumeric, and contain only letters, digits, hyphens, or underscores")
+	}
+	return nil
 }

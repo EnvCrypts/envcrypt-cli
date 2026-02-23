@@ -10,7 +10,10 @@ var email string
 var registerCmd = &cobra.Command{
 	Use:          "register",
 	Short:        "Create a new EnvCrypt user and cryptographic identity",
-	Long:         `Register creates a local encryption key pair and associates it with your EnvCrypt account using end-to-end encryption.`,
+	Long: `Register creates a local encryption key pair and associates it with your EnvCrypt account using end-to-end encryption.
+
+Examples:
+  envcrypt register --email user@example.com`,
 	SilenceUsage: true,
 
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -18,7 +21,7 @@ var registerCmd = &cobra.Command{
 			{Label: "Password", Secret: true, Required: true},
 		}, []string{""})
 		if err != nil {
-			return tui.Error("cancelled", nil)
+			return tui.Cancelled()
 		}
 
 		if err := Application.Register(cmd.Context(), email, vals[0]); err != nil {

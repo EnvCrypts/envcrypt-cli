@@ -30,8 +30,16 @@ func NewClient(baseUrl string, client *http.Client) *Client {
 	return c
 }
 
+// ErrorDetail represents the structured error body from the server.
+type ErrorDetail struct {
+	Code    string `json:"code"`
+	Message string `json:"message"`
+	Hint    string `json:"hint"`
+}
+
+// ErrorResponse wraps the server error envelope: {"error": {...}}.
 type ErrorResponse struct {
-	Error string `json:"error"`
+	Error ErrorDetail `json:"error"`
 }
 
 func (c *Client) Do(
@@ -107,8 +115,10 @@ func (c *Client) doOnce(
 		_ = json.NewDecoder(resp.Body).Decode(&errResp)
 
 		return &HTTPError{
-			Status: resp.StatusCode,
-			Body:   errResp.Error,
+			Status:  resp.StatusCode,
+			Code:    errResp.Error.Code,
+			Message: errResp.Error.Message,
+			Hint:    errResp.Error.Hint,
 		}
 	}
 
@@ -153,10 +163,15 @@ func (c *Client) Refresh(ctx context.Context) error {
 }
 
 type HTTPError struct {
-	Status int
-	Body   string
+	Status  int
+	Code    string
+	Message string
+	Hint    string
 }
 
 func (e *HTTPError) Error() string {
-	return fmt.Sprintf("%s", e.Body)
+	if e.Message != "" {
+		return e.Message
+	}
+	return fmt.Sprintf("HTTP %d: %s", e.Status, e.Code)
 }

@@ -16,7 +16,11 @@ var (
 var addCmd = &cobra.Command{
 	Use:          "add [project]",
 	Short:        "Add a user to a project",
-	Long:         "Add a user to a project.",
+	Long: `Add a user to a project.
+
+Examples:
+  envcrypt add my-project --email user@example.com
+  envcrypt add`,
 	Args:         cobra.MaximumNArgs(1),
 	SilenceUsage: true,
 
@@ -38,17 +42,17 @@ var addCmd = &cobra.Command{
 			}
 			projectName, err = tui.RunPicker("Select a project", names)
 			if err != nil {
-				return tui.Error("cancelled", nil)
+				return tui.Cancelled()
 			}
 		}
 
 		// Prompt for email if not provided
 		if addEmail == "" {
 			vals, err := tui.RunForm([]tui.FormField{
-				{Label: fmt.Sprintf("Member Email for %q", projectName), Required: true},
+				{Label: fmt.Sprintf("Member Email for %q", projectName), Required: true, Validate: tui.ValidateEmail},
 			}, []string{""})
 			if err != nil {
-				return tui.Error("cancelled", nil)
+				return tui.Cancelled()
 			}
 			addEmail = vals[0]
 		}

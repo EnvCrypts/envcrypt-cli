@@ -11,28 +11,66 @@ import (
 	cryptoutils "github.com/envcrypts/envcrypt-cli/internal/crypto"
 )
 
-// Replaces standard output functions
+// Spacer prints a blank line (suppressed in JSON/quiet mode).
 func Spacer() {
+	if currentMode == ModeJSON || isQuiet {
+		return
+	}
 	fmt.Println()
 }
 
+// Success prints a success message, dispatched by output mode.
 func Success(msg string) {
-	fmt.Printf("%s %s\n", IconCheck, msg)
-}
-
-func Info(msg string) {
-	fmt.Printf("%s %s\n", IconInfo, msg)
-}
-
-func Warn(msg string) {
-	fmt.Printf("%s %s\n", IconWarn, msg)
-}
-
-func Error(msg string, err error) error {
-	if err != nil {
-		return fmt.Errorf("%s %s\n  %s", IconCross, msg, StyleMuted.Render(err.Error()))
+	if isQuiet {
+		return
 	}
-	return fmt.Errorf("%s %s", IconCross, msg)
+	switch currentMode {
+	case ModeJSON:
+		JSONMessage("success", msg)
+	case ModePlain:
+		fmt.Printf("%s %s %s\n", PlainTimestamp(), PlainIconCheck, msg)
+	default:
+		fmt.Printf("%s %s\n", IconCheck, msg)
+	}
+}
+
+// Info prints an informational message, dispatched by output mode.
+func Info(msg string) {
+	if isQuiet {
+		return
+	}
+	switch currentMode {
+	case ModeJSON:
+		JSONMessage("info", msg)
+	case ModePlain:
+		fmt.Printf("%s %s %s\n", PlainTimestamp(), PlainIconInfo, msg)
+	default:
+		fmt.Printf("%s %s\n", IconInfo, msg)
+	}
+}
+
+// Warn prints a warning message, dispatched by output mode.
+func Warn(msg string) {
+	if isQuiet {
+		return
+	}
+	switch currentMode {
+	case ModeJSON:
+		JSONMessage("warn", msg)
+	case ModePlain:
+		fmt.Printf("%s %s %s\n", PlainTimestamp(), PlainIconWarn, msg)
+	default:
+		fmt.Printf("%s %s\n", IconWarn, msg)
+	}
+}
+
+// Error formats an error for display. Supports an optional hint string.
+func Error(msg string, err error, hints ...string) error {
+	hint := ""
+	if len(hints) > 0 {
+		hint = hints[0]
+	}
+	return ErrorWithHint(msg, err, hint)
 }
 
 func Truncate(s string, max int) string {
@@ -65,7 +103,21 @@ func StripANSI(s string) string {
 
 func RenderDiff(diff cryptoutils.DiffingResult, oldMap, newMap map[string]string, showSecrets bool) {
 	if len(diff.Added) == 0 && len(diff.Removed) == 0 && len(diff.Modified) == 0 {
+		if currentMode == ModeJSON {
+			JSONData(map[string]any{"changes": []string{}})
+			return
+		}
 		fmt.Println(StyleMuted.Render("No changes."))
+		return
+	}
+
+	if currentMode == ModeJSON {
+		jsonDiff := map[string]any{
+			"added":    diff.Added,
+			"removed":  diff.Removed,
+			"modified": diff.Modified,
+		}
+		JSONData(jsonDiff)
 		return
 	}
 
@@ -75,6 +127,11 @@ func RenderDiff(diff cryptoutils.DiffingResult, oldMap, newMap map[string]string
 		}
 		return "********"
 	}
+
+	// Colorized diff header
+	fmt.Println(StyleError.Render("--- old"))
+	fmt.Println(StyleSuccess.Render("+++ new"))
+	fmt.Println()
 
 	for _, key := range diff.Added {
 		fmt.Println(StyleSuccess.Render(fmt.Sprintf("+ %s=%s", key, mask(newMap[key]))))
@@ -95,11 +152,12 @@ func PrintEnvSummary(env map[string]string) {
 		return
 	}
 
-	keys := make([]string, 0, len(env))
-	for k := range env {
-		keys = append(keys, k)
+	if currentMode == ModeJSON {
+		JSONData(map[string]any{"count": len(env), "keys": sortedKeys(env)})
+		return
 	}
-	sort.Strings(keys)
+
+	keys := sortedKeys(env)
 
 	fmt.Printf("%s %s\n", IconInfo, StyleMuted.Render(fmt.Sprintf("%d Environment Variables", len(keys))))
 
@@ -113,6 +171,15 @@ func PrintEnvSummary(env map[string]string) {
 	}
 }
 
+func sortedKeys(m map[string]string) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
+}
+
 func PrintServiceRoleSecret(keyPair *config.ServiceRoleKeyPair) {
 	Spacer()
 	Warn("This is a one-time view. Save these credentials securely!")
@@ -120,6 +187,14 @@ func PrintServiceRoleSecret(keyPair *config.ServiceRoleKeyPair) {
 
 	pub := base64.StdEncoding.EncodeToString(keyPair.PublicKey)
 	priv := base64.StdEncoding.EncodeToString(keyPair.PrivateKey)
+
+	if currentMode == ModeJSON {
+		JSONData(map[string]string{
+			"public_key":  pub,
+			"private_key": priv,
+		})
+		return
+	}
 
 	content := fmt.Sprintf(
 		"ENVCRYPT_SERVICE_ROLE_PUBLIC_KEY=%s\nENVCRYPT_SERVICE_ROLE_PRIVATE_KEY=%s",
@@ -130,6 +205,11 @@ func PrintServiceRoleSecret(keyPair *config.ServiceRoleKeyPair) {
 }
 
 func PrintServiceRoleDetail(role *config.ServiceRole) {
+	if currentMode == ModeJSON {
+		JSONData(role)
+		return
+	}
+
 	Info(fmt.Sprintf("Service Role: %s", role.Name))
 	
 	fmt.Printf("  %s %s\n", HeaderStyle.Render("ID:"), role.ID)
@@ -139,6 +219,15 @@ func PrintServiceRoleDetail(role *config.ServiceRole) {
 }
 
 func PrintServiceRolePermissions(perm *config.ServiceRolePermsResponse, repoPrincipal string) {
+	if currentMode == ModeJSON {
+		JSONData(map[string]string{
+			"repo_principal": repoPrincipal,
+			"project":        perm.ProjectName,
+			"env":            perm.Env,
+		})
+		return
+	}
+
 	Info(fmt.Sprintf("Permissions for %s", repoPrincipal))
 
 	fmt.Printf("  %s %s\n", HeaderStyle.Render("Project:"), perm.ProjectName)

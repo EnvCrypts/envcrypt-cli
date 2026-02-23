@@ -2,16 +2,17 @@ package cmd
 
 import (
 	"github.com/envcrypts/envcrypt-cli/internal/tui"
-
-	"fmt"
-
 	"github.com/spf13/cobra"
 )
 
-// permissions
 var serviceRolePermissionsCmd = &cobra.Command{
-	Use:          "permissions <name>",
-	Short:        "View what a service role can access",
+	Use:   "permissions <name>",
+	Short: "View what a service role can access",
+	Long: `View the project environments a service role has access to.
+
+Examples:
+  envcrypt service-role permissions github:acme/backend:ref:refs/heads/main
+  envcrypt service-role permissions`,
 	Args:         cobra.MaximumNArgs(1),
 	SilenceUsage: true,
 
@@ -27,16 +28,15 @@ var serviceRolePermissionsCmd = &cobra.Command{
 		}
 
 		if repoPrincipal == "" {
-			return fmt.Errorf("service role principal is required")
+			return tui.Error("service role principal is required", nil)
 		}
 
 		perm, err := Application.GetPermissions(cmd.Context(), repoPrincipal)
 		if err != nil {
-			return err
+			return tui.Error("failed to fetch permissions", err)
 		}
 
 		tui.PrintServiceRolePermissions(perm, repoPrincipal)
-
 		return nil
 	},
 }

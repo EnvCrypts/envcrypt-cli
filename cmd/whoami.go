@@ -7,11 +7,14 @@ import (
 	"github.com/spf13/viper"
 )
 
-// whoamiCmd represents the whoami command
 var whoamiCmd = &cobra.Command{
 	Use:          "whoami",
 	Short:        "Show the current authenticated user",
-	Long:         "Display the identity currently logged into EnvCrypt.",
+	Long: `Display the identity currently logged into EnvCrypt.
+
+Examples:
+  envcrypt whoami
+  envcrypt whoami --json`,
 	Args:         cobra.NoArgs,
 	SilenceUsage: true,
 
@@ -19,11 +22,20 @@ var whoamiCmd = &cobra.Command{
 		email := viper.GetString("user.email")
 		userID := viper.GetString("user.id")
 
+		if tui.Mode() == tui.ModeJSON {
+			tui.JSONData(map[string]any{
+				"authenticated": email != "",
+				"email":         email,
+				"user_id":       userID,
+			})
+			return nil
+		}
+
 		if email == "" {
 			return tui.Error(
 				"not logged in",
-				nil)
-
+				nil,
+				"Run 'envcrypt login' to authenticate")
 		}
 
 		tui.Success("Logged in as " + email)

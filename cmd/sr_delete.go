@@ -1,17 +1,22 @@
 package cmd
 
 import (
-	"github.com/envcrypts/envcrypt-cli/internal/tui"
-
 	"fmt"
 
+	"github.com/envcrypts/envcrypt-cli/internal/tui"
 	"github.com/spf13/cobra"
 )
 
-// delete
+var srDeleteForce bool
+
 var serviceRoleDeleteCmd = &cobra.Command{
-	Use:          "delete <name>",
-	Short:        "Delete a service role (rare)",
+	Use:   "delete <name>",
+	Short: "Delete a service role (rare)",
+	Long: `Delete a service role and revoke all of its access.
+
+Examples:
+  envcrypt service-role delete github:acme/backend:ref:refs/heads/main
+  envcrypt service-role delete --force`,
 	Args:         cobra.MaximumNArgs(1),
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -26,20 +31,24 @@ var serviceRoleDeleteCmd = &cobra.Command{
 		}
 
 		if repoPrincipal == "" {
-			return fmt.Errorf("service role principal is required")
+			return tui.Error("service role principal is required", nil)
 		}
 
 		role, err := Application.GetServiceRole(cmd.Context(), repoPrincipal)
 		if err != nil {
-			return err
+			return tui.Error("failed to fetch service role", err)
 		}
 
-		if !tui.ConfirmDangerousAction(fmt.Sprintf("Are you sure you want to delete service role %q?", role.Name), role.Name) {
-			return nil
+		if !tui.ConfirmDangerousAction(
+			fmt.Sprintf("Are you sure you want to delete service role %q?", role.Name),
+			role.Name,
+			srDeleteForce,
+		) {
+			return tui.Cancelled()
 		}
 
 		if err := Application.DeleteServiceRole(cmd.Context(), role.ID); err != nil {
-			return err
+			return tui.Error("failed to delete service role", err)
 		}
 
 		tui.Success(fmt.Sprintf("Service role %q deleted", role.Name))
@@ -49,4 +58,5 @@ var serviceRoleDeleteCmd = &cobra.Command{
 
 func init() {
 	serviceRoleCmd.AddCommand(serviceRoleDeleteCmd)
+	serviceRoleDeleteCmd.Flags().BoolVar(&srDeleteForce, "force", false, "Delete without confirmation prompt")
 }

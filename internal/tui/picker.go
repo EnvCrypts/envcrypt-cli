@@ -62,7 +62,7 @@ func (m pickerModel) View() string {
 			b.WriteString(pickerItemStyle.Render(item) + "\n")
 		}
 	}
-	b.WriteString(fmt.Sprintf("\n  %s\n", StyleMuted.Render("↑/↓ to navigate  •  enter to select  •  esc to cancel")))
+	b.WriteString(fmt.Sprintf("\n  %s\n", StyleMuted.Render(PickerNavHint)))
 	return b.String()
 }
 
@@ -81,7 +81,7 @@ func RunPicker(title string, items []string) (string, error) {
 	}
 	final, ok := result.(pickerModel)
 	if !ok || final.abort {
-		return "", fmt.Errorf("cancelled")
+		return "", ErrCancelled
 	}
 	return final.chosen, nil
 }

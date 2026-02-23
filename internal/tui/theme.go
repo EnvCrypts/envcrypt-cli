@@ -25,6 +25,12 @@ var (
 	IconWarn  = StyleWarn.Render("[!]")
 	IconInfo  = StyleInfo.Render(">")
 
+	// Plain-mode icons (no ANSI)
+	PlainIconCheck = "[✓]"
+	PlainIconCross = "[x]"
+	PlainIconWarn  = "[!]"
+	PlainIconInfo  = ">"
+
 	// Structural Styles
 	HeaderStyle = lipgloss.NewStyle().Foreground(ColorMuted).Bold(true)
 	
@@ -39,4 +45,30 @@ var (
 		BorderForeground(ColorPrimary).
 		Padding(1).
 		MarginTop(1)
+
+	// Centralised navigation hint strings
+	TableNavHint  = "↑/↓ to navigate  •  q to quit"
+	PickerNavHint = "↑/↓ to navigate  •  enter to select  •  esc to cancel"
+	FormNavHint   = "enter to confirm  •  esc to cancel"
 )
+
+// RenderBanner returns a high-fidelity ASCII/styled banner for the CLI.
+func RenderBanner() string {
+	banner := `
+  ______               _____                      _   
+ |  ____|             / ____|                    | |  
+ | |__   _ ____   __ | |     _ __ _   _ _ __ | |_ 
+ |  __| | '_ \ \ / / | |    | '__| | | | '_ \| __|
+ | |____| | | \ V /  | |____| |  | |_| | |_) | |_ 
+ |______|_| |_|\_/    \_____|_|   \__, | .__/ \__|
+                                   __/ | |        
+                                  |___/|_|        `
+
+	logo := lipgloss.NewStyle().Foreground(ColorPrimary).Render(banner)
+	subtitle := lipgloss.NewStyle().
+		Foreground(ColorMuted).
+		Italic(true).
+		Render("    Zero-trust, end-to-end encrypted environment management")
+
+	return lipgloss.JoinVertical(lipgloss.Left, logo, subtitle)
+}

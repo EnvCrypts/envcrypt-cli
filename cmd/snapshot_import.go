@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"context"
-	"net/http"
 
 	"github.com/envcrypts/envcrypt-cli/internal/client"
 	"github.com/envcrypts/envcrypt-cli/internal/tui"
@@ -12,8 +11,14 @@ import (
 var snapshotImportFilename string
 
 var snapshotImportCmd = &cobra.Command{
-	Use:   "import [new_project_name]",
+	Use:   "import [new_project]",
 	Short: "Import a project snapshot",
+	Long: `Import a previously exported project snapshot as a new project.
+
+Examples:
+  envcrypt snapshot import new-project-name
+  envcrypt snapshot import new-project-name --file backup.json
+  envcrypt snapshot import`,
 	Args:  cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		newProjectName := ""
@@ -22,23 +27,22 @@ var snapshotImportCmd = &cobra.Command{
 		}
 
 		if newProjectName == "" {
-			vals, err := tui.RunForm([]tui.FormField{{Label: "New Project Name", Required: true}}, nil)
+			vals, err := tui.RunForm([]tui.FormField{{Label: "New Project Name", Required: true, Validate: tui.ValidateProjectName}}, nil)
 			if err != nil || len(vals) == 0 || vals[0] == "" {
-				return tui.Error("cancelled", nil)
+				return tui.Cancelled()
 			}
 			newProjectName = vals[0]
 		}
 
 		filename := snapshotImportFilename
 		if filename == "" {
-			vals, err := tui.RunForm([]tui.FormField{{Label: "Filename to import from", Required: true}}, []string{newProjectName + ".json"})
+			vals, err := tui.RunForm([]tui.FormField{{Label: "Filename to import from", Required: true, Validate: tui.ValidateFileExists}}, []string{newProjectName + ".json"})
 			if err != nil || len(vals) == 0 || vals[0] == "" {
-				return tui.Error("cancelled", nil)
+				return tui.Cancelled()
 			}
 			filename = vals[0]
 		}
 
-		
 		var newID string
 		err := tui.RunActionWithSpinner("Importing snapshot...", func() error {
 			var importErr error
@@ -48,14 +52,11 @@ var snapshotImportCmd = &cobra.Command{
 
 		if err != nil {
 			if httpErr, ok := err.(*client.HTTPError); ok {
-				switch httpErr.Status {
-				case http.StatusBadRequest:
-					return tui.Error("Snapshot validation failed (checksum mismatch or malformed file).", nil)
-				case http.StatusForbidden:
-					return tui.Error("Permission denied.", nil)
-				case http.StatusConflict:
-					return tui.Error("Project conflict detected.", nil)
-				}
+				return tui.MapAPIError(&tui.APIErrorDetail{
+					Code:    httpErr.Code,
+					Message: httpErr.Message,
+					Hint:    httpErr.Hint,
+				})
 			}
 			return tui.Error("Failed to import snapshot", err)
 		}

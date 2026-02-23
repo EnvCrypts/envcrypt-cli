@@ -1,14 +1,13 @@
 package cmd
 
 import (
-	"github.com/envcrypts/envcrypt-cli/internal/tui"
-
 	"encoding/base64"
 	"fmt"
 	"os"
 	"strings"
 
 	cryptoutils "github.com/envcrypts/envcrypt-cli/internal/crypto"
+	"github.com/envcrypts/envcrypt-cli/internal/tui"
 	"github.com/spf13/cobra"
 )
 
@@ -23,7 +22,7 @@ var ciLoginCmd = &cobra.Command{
 	Short: "Authenticate and pull secrets in CI environment",
 	Long: `Authenticate using GitHub OIDC token and pull secrets for CI/CD.
 
-Example:
+Examples:
   envcrypt ci login \
     --oidc-token $ACTIONS_ID_TOKEN \
     --env prod \
@@ -100,7 +99,6 @@ Example:
 
 		tui.Success(fmt.Sprintf("Pulled %d secrets to %s", len(envMap), outputPath))
 
-		
 		if githubEnv := os.Getenv("GITHUB_ENV"); githubEnv != "" {
 			f, err := os.OpenFile(githubEnv, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 			if err == nil {

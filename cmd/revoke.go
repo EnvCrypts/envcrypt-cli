@@ -11,12 +11,19 @@ import (
 var (
 	revokeProject string
 	revokeEmail   string
+	revokeForce   bool
 )
 
 var revokeCmd = &cobra.Command{
 	Use:          "revoke [project]",
 	Short:        "Revoke a user's access to a project",
-	Long:         "Revoke a user's access to a project without removing the member.",
+	Long: `Revoke a user's access to a project without removing the member.
+
+Use --force to skip the confirmation prompt.
+
+Examples:
+  envcrypt revoke my-project --email user@example.com
+  envcrypt revoke --force`,
 	Args:         cobra.MaximumNArgs(1),
 	SilenceUsage: true,
 
@@ -38,17 +45,17 @@ var revokeCmd = &cobra.Command{
 			}
 			projectName, err = tui.RunPicker("Select a project to revoke access on", names)
 			if err != nil {
-				return tui.Error("cancelled", nil)
+				return tui.Cancelled()
 			}
 		}
 
 		// Prompt for email if not provided
 		if revokeEmail == "" {
 			vals, err := tui.RunForm([]tui.FormField{
-				{Label: fmt.Sprintf("Email to revoke on %q", projectName), Required: true},
+				{Label: fmt.Sprintf("Email to revoke on %q", projectName), Required: true, Validate: tui.ValidateEmail},
 			}, []string{""})
 			if err != nil {
-				return tui.Error("cancelled", nil)
+				return tui.Cancelled()
 			}
 			revokeEmail = vals[0]
 		}
@@ -60,10 +67,10 @@ var revokeCmd = &cobra.Command{
 		ok := tui.ConfirmDangerousAction(
 			fmt.Sprintf("Revoke access for %s on project %q?", revokeEmail, projectName),
 			revokeEmail,
+			revokeForce,
 		)
 		if !ok {
-			tui.Info("Aborted.")
-			return nil
+			return tui.Cancelled()
 		}
 
 		if err := Application.RevokeAccess(cmd.Context(), projectName, revokeEmail); err != nil {
@@ -80,4 +87,5 @@ func init() {
 
 	revokeCmd.Flags().StringVar(&revokeProject, "project", "", "Project name")
 	revokeCmd.Flags().StringVar(&revokeEmail, "email", "", "Email address of the user")
+	revokeCmd.Flags().BoolVar(&revokeForce, "force", false, "Revoke without confirmation prompt")
 }

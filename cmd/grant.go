@@ -16,7 +16,11 @@ var (
 var grantCmd = &cobra.Command{
 	Use:          "grant [project]",
 	Short:        "Grant a user's access to a project",
-	Long:         "Grant or restore a user's access to a project without re-adding the member.",
+	Long: `Grant or restore a user's access to a project without re-adding the member.
+
+Examples:
+  envcrypt grant my-project --email user@example.com
+  envcrypt grant`,
 	Args:         cobra.MaximumNArgs(1),
 	SilenceUsage: true,
 
@@ -38,17 +42,17 @@ var grantCmd = &cobra.Command{
 			}
 			projectName, err = tui.RunPicker("Select a project to grant access on", names)
 			if err != nil {
-				return tui.Error("cancelled", nil)
+				return tui.Cancelled()
 			}
 		}
 
 		// Prompt for email if not provided
 		if grantEmail == "" {
 			vals, err := tui.RunForm([]tui.FormField{
-				{Label: fmt.Sprintf("Email to grant on %q", projectName), Required: true},
+				{Label: fmt.Sprintf("Email to grant on %q", projectName), Required: true, Validate: tui.ValidateEmail},
 			}, []string{""})
 			if err != nil {
-				return tui.Error("cancelled", nil)
+				return tui.Cancelled()
 			}
 			grantEmail = vals[0]
 		}
