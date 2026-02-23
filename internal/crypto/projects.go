@@ -9,6 +9,7 @@ import (
 	"errors"
 	"io"
 
+	"github.com/envcrypts/envcrypt-cli/internal/config"
 	"golang.org/x/crypto/hkdf"
 )
 
@@ -262,4 +263,30 @@ func UnwrapDEK(prk []byte, wrappedDEK []byte, dekNonce []byte) ([]byte, error) {
 	}
 
 	return gcm.Open(nil, dekNonce, wrappedDEK, nil)
+}
+
+func RewrapDEKs(oldPRK []byte, newPRK []byte, wrappedDEKs []config.WrappedDEK) ([]config.NewWrappedDEK, error) {
+	newWrappedDEKs := make([]config.NewWrappedDEK, len(wrappedDEKs))
+
+	for i, wd := range wrappedDEKs {
+		// Unwrap the DEK using the old PRK
+		dek, err := UnwrapDEK(oldPRK, wd.WrappedDEK, wd.DekNonce)
+		if err != nil {
+			return nil, err
+		}
+
+		// Rewrap the DEK using the new PRK
+		newWrapped, newNonce, err := WrapDEK(newPRK, dek)
+		if err != nil {
+			return nil, err
+		}
+
+		newWrappedDEKs[i] = config.NewWrappedDEK{
+			EnvVersionID:  wd.EnvVersionID,
+			NewWrappedDEK: newWrapped,
+			NewDekNonce:   newNonce,
+		}
+	}
+
+	return newWrappedDEKs, nil
 }
