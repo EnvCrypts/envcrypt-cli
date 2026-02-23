@@ -103,8 +103,7 @@ func (app *App) DeleteProject(ctx context.Context, projectName string) error {
 	return nil
 }
 
-// RotatePRK performs the client-side key rotation process.
-// It returns the new PRK version on success or an error.
+
 func (app *App) RotatePRK(ctx context.Context, projectID string) (int32, error) {
 	userEmail, userId := viper.GetString("user.email"), viper.GetString("user.id")
 	if userEmail == "" || userId == "" {
