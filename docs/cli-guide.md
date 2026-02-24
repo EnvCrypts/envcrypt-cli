@@ -27,6 +27,13 @@ List all projects you have access to.
 ### `envcrypt delete <project-name>`
 Delete a project permanently (admin only).
 
+### `envcrypt audit project <project-name>`
+View detailed project-level audit logs for all security and management events.
+Example:
+```bash
+envcrypt audit project my-app
+```
+
 ## Environment Variable Operations
 
 ### `envcrypt push <project-name> --env <env-name> --env-file <path>`

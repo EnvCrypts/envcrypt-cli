@@ -80,24 +80,33 @@ func assignGroups() {
 }
 
 func usageTemplate() string {
-	return `USAGE:
-  {{.CommandPath}} [command]
+	return `USAGE:{{if .Runnable}}
+  {{.UseLine}}{{end}}{{if .HasAvailableSubCommands}}
+  {{.CommandPath}} [command]{{end}}{{if gt (len .Aliases) 0}}
 
-{{if .HasAvailableSubCommands -}}
-{{range .Groups -}}
-{{$group := . -}}
-{{.Title}}:
-{{range $c := $.Commands -}}
-{{if eq $c.GroupID $group.ID}}  {{rpad $c.Name $c.NamePadding}} {{$c.Short}}
-{{end}}{{end}}
-{{end}}{{if not .HasParent -}}
-OTHER COMMANDS:
-{{range .Commands}}{{if not .GroupID}}  {{rpad .Name .NamePadding}} {{.Short}}
-{{end}}{{end}}
-{{end}}{{end}}
+ALIASES:
+  {{.NameAndAliases}}{{end}}{{if .HasExample}}
+
+EXAMPLES:
+{{.Example}}{{end}}{{if .HasAvailableSubCommands}}{{$cmds := .Commands}}{{if eq (len .Groups) 0}}
+
+AVAILABLE COMMANDS:{{range $cmds}}{{if .IsAvailableCommand}}
+  {{rpad .Name .NamePadding }} {{.Short}}{{end}}{{end}}{{else}}{{range $group := .Groups}}
+
+{{.Title}}:{{range $cmds}}{{if and (eq .GroupID $group.ID) (.IsAvailableCommand)}}
+  {{rpad .Name .NamePadding }} {{.Short}}{{end}}{{end}}{{end}}
+{{if not .AllChildCommandsHaveGroup}}OTHER COMMANDS:{{range $cmds}}{{if and (eq .GroupID "") (or .IsAvailableCommand (eq .Name "help"))}}
+  {{rpad .Name .NamePadding }} {{.Short}}{{end}}{{end}}{{end}}{{end}}{{end}}{{if .HasAvailableLocalFlags}}
+
 FLAGS:
-{{.LocalFlags.FlagUsages | trimTrailingWhitespaces}}
+{{.LocalFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasAvailableInheritedFlags}}
 
-Use "{{.CommandPath}} [command] --help" for more information about a command.
+GLOBAL FLAGS:
+{{.InheritedFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasHelpSubCommands}}
+
+ADDITIONAL HELP TOPICS:{{range .Commands}}{{if .IsAdditionalHelpTopicCommand}}
+  {{rpad .CommandPath .CommandPathPadding}} {{.Short}}{{end}}{{end}}{{end}}{{if .HasAvailableSubCommands}}
+
+Use "{{.CommandPath}} [command] --help" for more information about a command.{{end}}
 `
 }

@@ -12,7 +12,11 @@ import (
 var auditCmd = &cobra.Command{
 	Use:   "audit",
 	Short: "Audit operations",
-	Long:  "View audit logs.",
+	Long: `View audit logs for resources within envcrypt.
+Currently, this supports viewing project-level audit logs.`,
+	Example: `  envcrypt audit project my-project
+  envcrypt audit project my-project --limit 10
+  envcrypt audit project my-project --action ENV_CREATE`,
 }
 
 var (
@@ -28,6 +32,25 @@ var (
 var auditProjectCmd = &cobra.Command{
 	Use:   "project [name]",
 	Short: "Audit logs for a project",
+	Long: `View detailed audit logs for a specific project.
+If no project name is provided, an interactive selector will be shown.
+
+You can filter logs by various criteria such as actor, action type, status, and time range.
+
+Available filters:
+  --actor:  Filter by the email of the user who performed the action
+  --action: Filter by the specific action type (e.g., ENV_CREATE, ENV_UPDATE)
+  --status: Filter by the outcome status (success, failed)
+  --from:   Filter starting from this timestamp (RFC3339 format)
+  --to:     Filter up to this timestamp (RFC3339 format)`,
+	Example: `  # View the last 50 audit logs (default)
+  envcrypt audit project my-project
+
+  # Filter by a specific user and action
+  envcrypt audit project my-project --actor user@example.com --action ENV_UPDATE
+
+  # Filter by date range and limit results
+  envcrypt audit project my-project --from "2023-10-01T00:00:00Z" --to "2023-10-31T23:59:59Z" --limit 100`,
 	Args:  cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var projectName string
