@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/rand"
 	"errors"
-	"log"
 
 	"github.com/envcrypts/envcrypt-cli/internal/config"
 	cryptoutils "github.com/envcrypts/envcrypt-cli/internal/crypto"
