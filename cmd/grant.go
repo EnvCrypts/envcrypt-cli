@@ -30,7 +30,6 @@ Examples:
 			projectName = args[0]
 		}
 
-		// Pick project from list if not provided
 		if projectName == "" {
 			resp, err := Application.ListProjects(context.Background())
 			if err != nil {
@@ -46,7 +45,6 @@ Examples:
 			}
 		}
 
-		// Prompt for email if not provided
 		if grantEmail == "" {
 			vals, err := tui.RunForm([]tui.FormField{
 				{Label: fmt.Sprintf("Email to grant on %q", projectName), Required: true, Validate: tui.ValidateEmail},
