@@ -70,8 +70,6 @@ func (app *App) ListProjects(ctx context.Context) (*config.ListProjectResponse, 
 
 	var projectsRes config.ListProjectResponse
 	if err := app.HttpClient.Do(ctx, "POST", "/projects/list", projectsReq, &projectsRes, true); err != nil {
-		log.Print(projectsRes)
-		log.Print(err)
 		return nil, err
 	}
 

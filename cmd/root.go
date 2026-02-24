@@ -67,7 +67,7 @@ func assignGroups() {
 		switch c.Name() {
 		case "pull", "push", "diff", "rollback", "rotate":
 			c.GroupID = "workflow"
-		case "create", "delete", "list":
+		case "create", "delete", "list", "audit":
 			c.GroupID = "mgmt"
 		case "add", "grant", "revoke", "service-role":
 			c.GroupID = "access"
