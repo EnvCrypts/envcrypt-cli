@@ -30,6 +30,10 @@ func NewClient(baseUrl string, client *http.Client) *Client {
 	return c
 }
 
+func (c *Client) SetBaseURL(url string) {
+	c.baseUrl = url
+}
+
 // ErrorDetail represents the structured error body from the server.
 type ErrorDetail struct {
 	Code    string `json:"code"`

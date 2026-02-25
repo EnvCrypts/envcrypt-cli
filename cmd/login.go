@@ -58,6 +58,7 @@ Examples:
 			if err := config.SaveBackendURL(backendURL); err != nil {
 				return tui.Error("failed to save custom backend URL", err)
 			}
+			Application.SetBaseURL(backendURL)
 		}
 
 		err = tui.RunActionWithSpinner("Authenticating...", func() error {

@@ -16,3 +16,7 @@ func NewApp(baseUrl string) *App {
 		HttpClient: httpClient,
 	}
 }
+
+func (app *App) SetBaseURL(url string) {
+	app.HttpClient.SetBaseURL(url)
+}
