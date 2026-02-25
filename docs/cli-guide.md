@@ -19,7 +19,7 @@ Show the current authenticated user identity.
 ## Project Management
 
 ### `envcrypt create <project-name>`
-Create a new project. Generates a new AES-256-GCM Project Master Key (PMK).
+Create a new project. Generates a new random Project Root Key (PRK).
 
 ### `envcrypt list`
 List all projects you have access to.
@@ -55,7 +55,7 @@ Rollback to a previous immutable version of an environment.
 ## Access Control
 
 ### `envcrypt grant <project-name> <email>`
-Grant a user access to a project. This decrypts the PMK and re-wraps it for the new user's public key.
+Grant a user access to a project. This decrypts the PRK and re-wraps it for the new user's public key.
 Example:
 ```bash
 envcrypt grant my-app colleague@example.com

@@ -9,7 +9,7 @@ Welcome to EnvCrypt CLI! This guide will help you install the CLI, create an acc
 Run the following command to install the latest version:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/envcrypts/envcrypt-cli/main/install.sh | bash
+curl -fsSL https://envcrypt.vijayvenkatj.in/install.sh | bash
 ```
 
 ### Prebuilt Binaries
@@ -40,7 +40,7 @@ envcrypt login
 
 ## 3. Create a Project
 
-Initialize a new project. You become the admin and the Project Master Key (PMK) is generated and wrapped for you locally.
+Initialize a new project. You become the admin and the Project Root Key (PRK) is generated and wrapped for you locally.
 
 ```bash
 envcrypt create my-app

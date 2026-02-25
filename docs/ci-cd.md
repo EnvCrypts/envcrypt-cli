@@ -62,7 +62,7 @@ jobs:
 
       - name: Install EnvCrypt CLI
         run: |
-          curl -fsSL https://raw.githubusercontent.com/envcrypts/envcrypt-cli/main/install.sh | bash
+          curl -fsSL https://envcrypt.vijayvenkatj.in/install.sh | bash
 
       - name: Get GitHub OIDC Token
         id: oidc
