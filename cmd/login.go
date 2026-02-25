@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/envcrypts/envcrypt-cli/internal/config"
 	"github.com/envcrypts/envcrypt-cli/internal/tui"
 	"github.com/spf13/cobra"
 )
@@ -26,13 +27,15 @@ Examples:
 			fields = []tui.FormField{
 				{Label: "Email", Required: true, Validate: tui.ValidateEmail},
 				{Label: "Password", Secret: true, Required: true},
+				{Label: "Custom Backend URL (leave blank for default)", Required: false},
 			}
-			prefills = []string{"", ""}
+			prefills = []string{"", "", ""}
 		} else {
 			fields = []tui.FormField{
 				{Label: fmt.Sprintf("Password for %s", email), Secret: true, Required: true},
+				{Label: "Custom Backend URL (leave blank for default)", Required: false},
 			}
-			prefills = []string{""}
+			prefills = []string{"", ""}
 		}
 
 		vals, err := tui.RunForm(fields, prefills)
@@ -40,13 +43,21 @@ Examples:
 			return tui.Cancelled()
 		}
 
-		var collectedEmail, password string
+		var collectedEmail, password, backendURL string
 		if email == "" {
 			collectedEmail = vals[0]
 			password = vals[1]
+			backendURL = vals[2]
 		} else {
 			collectedEmail = email
 			password = vals[0]
+			backendURL = vals[1]
+		}
+
+		if backendURL != "" {
+			if err := config.SaveBackendURL(backendURL); err != nil {
+				return tui.Error("failed to save custom backend URL", err)
+			}
 		}
 
 		err = tui.RunActionWithSpinner("Authenticating...", func() error {

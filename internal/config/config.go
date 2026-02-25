@@ -34,3 +34,21 @@ func Load() error {
 
 	return nil
 }
+
+func SaveBackendURL(url string) error {
+	viper.Set("api.base_url", url)
+
+	dir, err := os.UserConfigDir()
+	if err != nil {
+		return err
+	}
+
+	appDir := filepath.Join(dir, "envcrypt")
+	path := filepath.Join(appDir, "config.yaml")
+
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return viper.WriteConfigAs(path)
+	}
+
+	return viper.WriteConfig()
+}

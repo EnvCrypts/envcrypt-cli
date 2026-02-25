@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/envcrypts/envcrypt-cli/internal/config"
 	"github.com/envcrypts/envcrypt-cli/internal/tui"
 	"github.com/spf13/cobra"
 )
@@ -19,12 +20,22 @@ Examples:
 	RunE: func(cmd *cobra.Command, args []string) error {
 		vals, err := tui.RunForm([]tui.FormField{
 			{Label: "Password", Secret: true, Required: true},
-		}, []string{""})
+			{Label: "Custom Backend URL (leave blank for default)", Required: false},
+		}, []string{"", ""})
 		if err != nil {
 			return tui.Cancelled()
 		}
 
-		if err := Application.Register(cmd.Context(), email, vals[0]); err != nil {
+		password := vals[0]
+		backendURL := vals[1]
+
+		if backendURL != "" {
+			if err := config.SaveBackendURL(backendURL); err != nil {
+				return tui.Error("failed to save custom backend URL", err)
+			}
+		}
+
+		if err := Application.Register(cmd.Context(), email, password); err != nil {
 			return tui.Error("Registration failed", err)
 		}
 
