@@ -55,8 +55,8 @@ var (
 // RenderBanner returns a high-fidelity ASCII/styled banner for the CLI.
 func RenderBanner() string {
 	banner := `
-  ______               _____                      _   
- |  ____|             / ____|                    | |  
+  ______               _____                  _   
+ |  ____|             / ____|                | |  
  | |__   _ ____   __ | |     _ __ _   _ _ __ | |_ 
  |  __| | '_ \ \ / / | |    | '__| | | | '_ \| __|
  | |____| | | \ V /  | |____| |  | |_| | |_) | |_ 
