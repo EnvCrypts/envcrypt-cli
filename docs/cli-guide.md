@@ -18,8 +18,8 @@ Show the current authenticated user identity.
 
 ## Project Management
 
-### `envcrypt create <project-name>`
-Create a new project. Generates a new random Project Root Key (PRK).
+### `envcrypt create [project-name]`
+Create a new project. Generates a new random Project Root Key (PRK). If left blank, defaults to the git repository name.
 
 ### `envcrypt list`
 List all projects you have access to.
@@ -36,15 +36,15 @@ envcrypt audit project my-app
 
 ## Environment Variable Operations
 
-### `envcrypt push <project-name> --env <env-name> --env-file <path>`
-Encrypt and upload environment variables from a local file.
+### `envcrypt push [project-name] --env <env-name> --env-file <path>`
+Encrypt and upload environment variables from a local file. If `[project-name]` is left blank, the selector defaults to the git repository name.
 Example:
 ```bash
 envcrypt push my-app --env prod --env-file .env.prod
 ```
 
-### `envcrypt pull <project-name> --env <env-name>`
-Download and decrypt environment variables to your local machine.
+### `envcrypt pull [project-name] --env <env-name>`
+Download and decrypt environment variables to your local machine. If `[project-name]` is left blank, the selector defaults to the git repository name.
 
 ### `envcrypt diff`
 Diff two environment versions or show changes between local and remote.

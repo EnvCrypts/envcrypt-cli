@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"path"
 
 	"github.com/envcrypts/envcrypt-cli/internal/tui"
 	"github.com/spf13/cobra"
@@ -12,6 +13,7 @@ var createCmd = &cobra.Command{
 	Use:          "create [project]",
 	Short:        "Create a new project",
 	Long: `Create a new encrypted project.
+If no project name is provided, it defaults to the current git repository name.
 
 Examples:
   envcrypt create my-project
@@ -27,9 +29,15 @@ Examples:
 
 		// Prompt for project name if not provided
 		if projectName == "" {
+			defaultProject := ""
+			repo, errGit := getRepoFromGit()
+			if errGit == nil && repo != "" {
+				defaultProject = path.Base(repo)
+			}
+
 			vals, err := tui.RunForm([]tui.FormField{
 				{Label: "Project Name", Required: true, Validate: tui.ValidateProjectName},
-			}, []string{""})
+			}, []string{defaultProject})
 			if err != nil {
 				return tui.Cancelled()
 			}

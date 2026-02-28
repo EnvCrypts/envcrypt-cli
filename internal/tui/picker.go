@@ -68,13 +68,28 @@ func (m pickerModel) View() string {
 
 
 func RunPicker(title string, items []string) (string, error) {
+	return RunPickerWithDefault(title, items, "")
+}
+
+func RunPickerWithDefault(title string, items []string, defaultItem string) (string, error) {
 	if len(items) == 0 {
 		return "", fmt.Errorf("no items to pick from")
 	}
 	if !IsInteractive() {
 		return "", fmt.Errorf("not a terminal: provide required values via flags")
 	}
-	p := tea.NewProgram(pickerModel{title: title, items: items})
+
+	cursor := 0
+	if defaultItem != "" {
+		for i, item := range items {
+			if item == defaultItem {
+				cursor = i
+				break
+			}
+		}
+	}
+
+	p := tea.NewProgram(pickerModel{title: title, items: items, cursor: cursor})
 	result, err := p.Run()
 	if err != nil {
 		return "", err

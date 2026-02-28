@@ -40,7 +40,7 @@ envcrypt login
 
 ## 3. Create a Project
 
-Initialize a new project. You become the admin and the Project Root Key (PRK) is generated and wrapped for you locally.
+Initialize a new project. You become the admin and the Project Root Key (PRK) is generated and wrapped for you locally. If the project name is omitted, it defaults to the current git repository name.
 
 ```bash
 envcrypt create my-app

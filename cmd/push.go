@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path"
 
 	cryptoutils "github.com/envcrypts/envcrypt-cli/internal/crypto"
 	"github.com/envcrypts/envcrypt-cli/internal/tui"
@@ -20,6 +21,7 @@ var pushCmd = &cobra.Command{
 	Use:          "push [project]",
 	Short:        "Encrypt and upload environment variables",
 	Long: `Encrypt variables from a .env file and upload them to a project environment.
+If no project name is provided, the selector defaults to the current git repository name.
 
 Examples:
   envcrypt push my-project --env prod
@@ -44,7 +46,13 @@ Examples:
 			for i, p := range resp.Projects {
 				names[i] = p.Name
 			}
-			projectName, err = tui.RunPicker("Select a project to push to", names)
+			defaultProject := ""
+			repo, errGit := getRepoFromGit()
+			if errGit == nil && repo != "" {
+				defaultProject = path.Base(repo)
+			}
+
+			projectName, err = tui.RunPickerWithDefault("Select a project to push to", names, defaultProject)
 			if err != nil {
 				return tui.Cancelled()
 			}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path"
 
 	cryptoutils "github.com/envcrypts/envcrypt-cli/internal/crypto"
 	"github.com/envcrypts/envcrypt-cli/internal/tui"
@@ -21,6 +22,7 @@ var pullCmd = &cobra.Command{
 	Use:          "pull [project]",
 	Short:        "Download and decrypt environment variables",
 	Long: `Download environment variables from a project and write them to a .env file.
+If no project name is provided, the selector defaults to the current git repository name.
 
 Examples:
   envcrypt pull my-project --env prod
@@ -45,7 +47,13 @@ Examples:
 			for i, p := range resp.Projects {
 				names[i] = p.Name
 			}
-			projectName, err = tui.RunPicker("Select a project to pull from", names)
+			defaultProject := ""
+			repo, errGit := getRepoFromGit()
+			if errGit == nil && repo != "" {
+				defaultProject = path.Base(repo)
+			}
+
+			projectName, err = tui.RunPickerWithDefault("Select a project to pull from", names, defaultProject)
 			if err != nil {
 				return tui.Cancelled()
 			}
