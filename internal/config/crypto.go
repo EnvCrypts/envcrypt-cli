@@ -18,6 +18,9 @@ type KeyPair struct {
 	PublicKey  []byte              `json:"public_key"`
 	PrivateKey []byte              `json:"private_key"`
 	EncKey     EncryptedPrivateKey `json:"encrypted_private_key"`
+
+	RecoveryKey    string              `json:"-"`
+	RecoveryEncKey EncryptedPrivateKey `json:"recovery_encrypted_private_key"`
 }
 
 type ServiceRoleKeyPair struct {

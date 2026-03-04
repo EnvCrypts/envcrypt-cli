@@ -18,16 +18,39 @@ Examples:
 	SilenceUsage: true,
 
 	RunE: func(cmd *cobra.Command, args []string) error {
-		vals, err := tui.RunForm([]tui.FormField{
-			{Label: "Password", Secret: true, Required: true},
-			{Label: "Custom Backend URL (leave blank for default)", Required: false},
-		}, []string{"", ""})
+		var fields []tui.FormField
+		var prefills []string
+
+		if email == "" {
+			fields = []tui.FormField{
+				{Label: "Email", Required: true, Validate: tui.ValidateEmail},
+				{Label: "Password", Secret: true, Required: true},
+				{Label: "Custom Backend URL (leave blank for default)", Required: false},
+			}
+			prefills = []string{"", "", ""}
+		} else {
+			fields = []tui.FormField{
+				{Label: "Password", Secret: true, Required: true},
+				{Label: "Custom Backend URL (leave blank for default)", Required: false},
+			}
+			prefills = []string{"", ""}
+		}
+
+		vals, err := tui.RunForm(fields, prefills)
 		if err != nil {
 			return tui.Cancelled()
 		}
 
-		password := vals[0]
-		backendURL := vals[1]
+		var collectedEmail, password, backendURL string
+		if email == "" {
+			collectedEmail = vals[0]
+			password = vals[1]
+			backendURL = vals[2]
+		} else {
+			collectedEmail = email
+			password = vals[0]
+			backendURL = vals[1]
+		}
 
 		if backendURL != "" {
 			if err := config.SaveBackendURL(backendURL); err != nil {
@@ -35,11 +58,20 @@ Examples:
 			}
 		}
 
-		if err := Application.Register(cmd.Context(), email, password); err != nil {
+		var keypair *config.KeyPair
+		err = tui.RunActionWithSpinner("Registering account...", func() error {
+			var regErr error
+			keypair, regErr = Application.Register(cmd.Context(), collectedEmail, password)
+			return regErr
+		})
+		if err != nil {
 			return tui.Error("Registration failed", err)
 		}
 
 		tui.Success("Registration successful!")
+		tui.Info("\nIMPORTANT: Store your recovery key safely. It is the only way to recover your account if you forget your password:")
+		tui.Success(keypair.RecoveryKey)
+		tui.Info("This key will never be shown again.\n")
 		return nil
 	},
 }
@@ -47,5 +79,4 @@ Examples:
 func init() {
 	rootCmd.AddCommand(registerCmd)
 	registerCmd.Flags().StringVarP(&email, "email", "e", "", "Email address")
-	registerCmd.MarkFlagRequired("email")
 }

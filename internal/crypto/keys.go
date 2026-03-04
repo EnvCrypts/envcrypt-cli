@@ -5,6 +5,7 @@ import (
 	"crypto/cipher"
 	"crypto/ecdh"
 	"crypto/rand"
+	"encoding/hex"
 	"errors"
 
 	"github.com/envcrypts/envcrypt-cli/internal/config"
@@ -118,10 +119,23 @@ func GenerateKeyPair(password string) (*config.KeyPair, error) {
 		return nil, err
 	}
 
+	recoveryKeyBytes := make([]byte, 32)
+	if _, err := rand.Read(recoveryKeyBytes); err != nil {
+		return nil, err
+	}
+	recoveryKey := hex.EncodeToString(recoveryKeyBytes)
+
+	recoveryEncKey, err := EncryptPrivateKey(privateKey, recoveryKey, &config.DefaultArgon2Params)
+	if err != nil {
+		return nil, err
+	}
+
 	return &config.KeyPair{
-		PrivateKey: privateKey.Bytes(),
-		PublicKey:  privateKey.PublicKey().Bytes(),
-		EncKey:     *encryptedKey,
+		PrivateKey:     privateKey.Bytes(),
+		PublicKey:      privateKey.PublicKey().Bytes(),
+		EncKey:         *encryptedKey,
+		RecoveryKey:    recoveryKey,
+		RecoveryEncKey: *recoveryEncKey,
 	}, nil
 }
 

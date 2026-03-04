@@ -41,6 +41,15 @@ func TestKeyCrypto(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, keypair.PrivateKey, decryptedBytes)
 
+		assert.NotEmpty(t, keypair.RecoveryKey)
+		assert.NotEmpty(t, keypair.RecoveryEncKey.EncryptedUserPrivateKey)
+		assert.NotEmpty(t, keypair.RecoveryEncKey.PrivateKeySalt)
+		assert.NotEmpty(t, keypair.RecoveryEncKey.PrivateKeyNonce)
+
+		recoveryDecryptedBytes, err := DecryptPrivateKey(&keypair.RecoveryEncKey, keypair.RecoveryKey, &config.DefaultArgon2Params)
+		require.NoError(t, err)
+		assert.Equal(t, keypair.PrivateKey, recoveryDecryptedBytes)
+
 		roleKeypair, err := GenerateServiceRoleKeyPair()
 		require.NoError(t, err)
 		assert.Len(t, roleKeypair.PrivateKey, 32)

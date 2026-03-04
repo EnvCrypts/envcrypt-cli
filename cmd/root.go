@@ -71,7 +71,7 @@ func assignGroups() {
 			c.GroupID = "mgmt"
 		case "add", "grant", "revoke", "service-role":
 			c.GroupID = "access"
-		case "login", "logout", "whoami", "status":
+		case "login", "logout", "whoami", "status", "recover":
 			c.GroupID = "session"
 		case "version", "completion", "snapshot":
 			c.GroupID = "system"
