@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 
-	"github.com/envcrypts/envcrypt-cli/internal/client"
 	"github.com/envcrypts/envcrypt-cli/internal/tui"
 	"github.com/spf13/cobra"
 )
@@ -19,7 +18,7 @@ Examples:
   envcrypt snapshot import new-project-name
   envcrypt snapshot import new-project-name --file backup.json
   envcrypt snapshot import`,
-	Args:  cobra.MaximumNArgs(1),
+	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		newProjectName := ""
 		if len(args) == 1 {
@@ -51,13 +50,6 @@ Examples:
 		})
 
 		if err != nil {
-			if httpErr, ok := err.(*client.HTTPError); ok {
-				return tui.MapAPIError(&tui.APIErrorDetail{
-					Code:    httpErr.Code,
-					Message: httpErr.Message,
-					Hint:    httpErr.Hint,
-				})
-			}
 			return tui.Error("Failed to import snapshot", err)
 		}
 

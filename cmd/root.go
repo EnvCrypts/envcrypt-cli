@@ -20,10 +20,11 @@ var (
 )
 
 var rootCmd = &cobra.Command{
-	Version: Version,
-	Use:     "envcrypt",
-	Short:   "Zero-trust, end-to-end encrypted environment variable management.",
-	Long:    tui.RenderBanner(),
+	Version:       Version,
+	Use:           "envcrypt",
+	Short:         "Zero-trust, end-to-end encrypted environment variable management.",
+	Long:          tui.RenderBanner(),
+	SilenceErrors: true,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		tui.InitOutput(globalJSON, globalNoColor, globalQuiet)
 		tui.SetNoTable(globalNoTable)
@@ -39,6 +40,7 @@ func Execute(a *app.App) {
 		if errors.Is(err, tui.ErrCancelled) {
 			os.Exit(130)
 		}
+		tui.RenderError(err)
 		os.Exit(1)
 	}
 }

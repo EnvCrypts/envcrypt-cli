@@ -3,6 +3,7 @@ package tui
 import (
 	"fmt"
 	"net/mail"
+	"net/url"
 	"os"
 	"regexp"
 	"strings"
@@ -151,7 +152,6 @@ func (m formModel) values() []string {
 	return vals
 }
 
-
 func RunForm(fields []FormField, prefills []string) ([]string, error) {
 	if !IsInteractive() {
 		return nil, fmt.Errorf("not a terminal: provide required values via flags")
@@ -171,7 +171,6 @@ func RunForm(fields []FormField, prefills []string) ([]string, error) {
 	}
 	return final.values(), nil
 }
-
 
 // --- Built-in validators ---
 
@@ -201,6 +200,18 @@ func ValidateFileExists(s string) error {
 func ValidateProjectName(s string) error {
 	if !projectNameRegex.MatchString(s) {
 		return fmt.Errorf("project name must be 3-64 chars, start/end with alphanumeric, and contain only letters, digits, hyphens, or underscores")
+	}
+	return nil
+}
+
+// ValidateBackendURL checks that a backend URL is complete and usable.
+func ValidateBackendURL(s string) error {
+	parsed, err := url.ParseRequestURI(strings.TrimSpace(s))
+	if err != nil || parsed.Scheme == "" || parsed.Host == "" {
+		return fmt.Errorf("enter a full URL like https://api.example.com or http://localhost:8081")
+	}
+	if parsed.Scheme != "http" && parsed.Scheme != "https" {
+		return fmt.Errorf("backend URL must start with http:// or https://")
 	}
 	return nil
 }

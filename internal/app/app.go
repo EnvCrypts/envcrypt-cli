@@ -20,3 +20,7 @@ func NewApp(baseUrl string) *App {
 func (app *App) SetBaseURL(url string) {
 	app.HttpClient.SetBaseURL(url)
 }
+
+func (app *App) BaseURL() string {
+	return app.HttpClient.BaseURL()
+}

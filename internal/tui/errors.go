@@ -20,42 +20,30 @@ func Cancelled() error {
 
 // ErrorWithHint renders an error with an actionable hint.
 func ErrorWithHint(msg string, err error, hint string) error {
-	if currentMode == ModeJSON {
-		obj := map[string]any{"level": "error", "message": msg}
-		if err != nil {
-			obj["detail"] = err.Error()
-		}
-		if hint != "" {
-			obj["hint"] = hint
-		}
-		JSONData(obj)
-		if err != nil {
-			return fmt.Errorf("%s: %w", msg, err)
-		}
-		return fmt.Errorf("%s", msg)
+	return &UIError{
+		Message: msg,
+		Err:     err,
+		Hint:    hint,
 	}
-
-	parts := fmt.Sprintf("%s %s", IconCross, msg)
-	if err != nil {
-		parts += fmt.Sprintf("\n  %s", StyleMuted.Render(err.Error()))
-	}
-	if hint != "" {
-		parts += fmt.Sprintf("\n  %s %s", IconInfo, StyleInfo.Render(hint))
-	}
-	return fmt.Errorf("%s", parts)
 }
 
-// APIErrorDetail represents the structured error returned by the server.
-type APIErrorDetail struct {
-	Code    string `json:"code"`
-	Message string `json:"message"`
-	Hint    string `json:"hint"`
+// UIError is a user-facing error that carries optional detail and hint text.
+type UIError struct {
+	Message string
+	Err     error
+	Hint    string
 }
 
-// MapAPIError converts an APIErrorDetail into a user-friendly error with hint.
-func MapAPIError(detail *APIErrorDetail) error {
-	if detail == nil {
-		return fmt.Errorf("unknown server error")
+func (e *UIError) Error() string {
+	if e == nil {
+		return "unknown error"
 	}
-	return ErrorWithHint(detail.Message, nil, detail.Hint)
+	return e.Message
+}
+
+func (e *UIError) Unwrap() error {
+	if e == nil {
+		return nil
+	}
+	return e.Err
 }

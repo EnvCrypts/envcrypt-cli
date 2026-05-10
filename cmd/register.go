@@ -9,8 +9,8 @@ import (
 var email string
 
 var registerCmd = &cobra.Command{
-	Use:          "register",
-	Short:        "Create a new EnvCrypt user and cryptographic identity",
+	Use:   "register",
+	Short: "Create a new EnvCrypt user and cryptographic identity",
 	Long: `Register creates a local encryption key pair and associates it with your EnvCrypt account using end-to-end encryption.
 
 Examples:
@@ -25,13 +25,13 @@ Examples:
 			fields = []tui.FormField{
 				{Label: "Email", Required: true, Validate: tui.ValidateEmail},
 				{Label: "Password", Secret: true, Required: true},
-				{Label: "Custom Backend URL (leave blank for default)", Required: false},
+				{Label: "Custom Backend URL (leave blank for default)", Required: false, Validate: tui.ValidateBackendURL},
 			}
 			prefills = []string{"", "", ""}
 		} else {
 			fields = []tui.FormField{
 				{Label: "Password", Secret: true, Required: true},
-				{Label: "Custom Backend URL (leave blank for default)", Required: false},
+				{Label: "Custom Backend URL (leave blank for default)", Required: false, Validate: tui.ValidateBackendURL},
 			}
 			prefills = []string{"", ""}
 		}
@@ -52,10 +52,8 @@ Examples:
 			backendURL = vals[1]
 		}
 
-		if backendURL != "" {
-			if err := config.SaveBackendURL(backendURL); err != nil {
-				return tui.Error("failed to save custom backend URL", err)
-			}
+		if err := applyBackendURL(backendURL); err != nil {
+			return err
 		}
 
 		var keypair *config.KeyPair

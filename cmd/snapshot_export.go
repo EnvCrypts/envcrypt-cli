@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 
-	"github.com/envcrypts/envcrypt-cli/internal/client"
 	"github.com/envcrypts/envcrypt-cli/internal/tui"
 	"github.com/spf13/cobra"
 )
@@ -19,7 +18,7 @@ Examples:
   envcrypt snapshot export my-project
   envcrypt snapshot export my-project --file backup.json
   envcrypt snapshot export`,
-	Args:  cobra.MaximumNArgs(1),
+	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		projectName := ""
 		if len(args) == 1 {
@@ -31,7 +30,7 @@ Examples:
 			if err != nil {
 				return tui.Error("failed to fetch projects", err)
 			}
-			
+
 			var adminProjects []string
 			for _, p := range projectsResp.Projects {
 				if p.Role == "admin" {
@@ -57,7 +56,6 @@ Examples:
 			filename = vals[0]
 		}
 
-		
 		var absPath string
 		err := tui.RunActionWithSpinner("Exporting snapshot...", func() error {
 			var exportErr error
@@ -66,13 +64,6 @@ Examples:
 		})
 
 		if err != nil {
-			if httpErr, ok := err.(*client.HTTPError); ok {
-				return tui.MapAPIError(&tui.APIErrorDetail{
-					Code:    httpErr.Code,
-					Message: httpErr.Message,
-					Hint:    httpErr.Hint,
-				})
-			}
 			return tui.Error("Failed to export snapshot", err)
 		}
 

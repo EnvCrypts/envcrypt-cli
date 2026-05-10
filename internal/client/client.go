@@ -6,7 +6,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
+	"strings"
 
 	"github.com/envcrypts/envcrypt-cli/internal/config"
 	cryptoutils "github.com/envcrypts/envcrypt-cli/internal/crypto"
@@ -25,8 +27,6 @@ func NewClient(baseUrl string, client *http.Client) *Client {
 		http:    client,
 	}
 
-
-
 	return c
 }
 
@@ -34,11 +34,16 @@ func (c *Client) SetBaseURL(url string) {
 	c.baseUrl = url
 }
 
+func (c *Client) BaseURL() string {
+	return c.baseUrl
+}
+
 // ErrorDetail represents the structured error body from the server.
 type ErrorDetail struct {
-	Code    string `json:"code"`
-	Message string `json:"message"`
-	Hint    string `json:"hint"`
+	Code    string            `json:"code"`
+	Message string            `json:"message"`
+	Hint    string            `json:"hint,omitempty"`
+	Fields  map[string]string `json:"fields,omitempty"`
 }
 
 // ErrorResponse wraps the server error envelope: {"error": {...}}.
@@ -115,14 +120,15 @@ func (c *Client) doOnce(
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 400 {
-		var errResp ErrorResponse
-		_ = json.NewDecoder(resp.Body).Decode(&errResp)
+		body, _ := io.ReadAll(resp.Body)
+		errResp := decodeErrorResponse(body)
 
 		return &HTTPError{
 			Status:  resp.StatusCode,
 			Code:    errResp.Error.Code,
 			Message: errResp.Error.Message,
 			Hint:    errResp.Error.Hint,
+			Fields:  errResp.Error.Fields,
 		}
 	}
 
@@ -152,7 +158,6 @@ func (c *Client) Refresh(ctx context.Context) error {
 		return err
 	}
 
-
 	err = cryptoutils.SaveRefreshToken(resp.Session.RefreshToken.String())
 	if err != nil {
 		return err
@@ -171,11 +176,39 @@ type HTTPError struct {
 	Code    string
 	Message string
 	Hint    string
+	Fields  map[string]string
 }
 
 func (e *HTTPError) Error() string {
+	if e == nil {
+		return "unknown error"
+	}
+	if e.Code != "" && e.Message != "" {
+		return fmt.Sprintf("%s: %s", e.Code, e.Message)
+	}
 	if e.Message != "" {
 		return e.Message
 	}
-	return fmt.Sprintf("HTTP %d: %s", e.Status, e.Code)
+	if e.Code != "" {
+		return e.Code
+	}
+	return fmt.Sprintf("HTTP %d", e.Status)
+}
+
+func decodeErrorResponse(body []byte) ErrorResponse {
+	var errResp ErrorResponse
+	if len(body) == 0 {
+		return errResp
+	}
+
+	if err := json.Unmarshal(body, &errResp); err == nil && (errResp.Error.Code != "" || errResp.Error.Message != "" || errResp.Error.Hint != "" || len(errResp.Error.Fields) > 0) {
+		return errResp
+	}
+
+	msg := strings.TrimSpace(string(body))
+	if msg == "" {
+		msg = http.StatusText(http.StatusInternalServerError)
+	}
+	errResp.Error.Message = msg
+	return errResp
 }
