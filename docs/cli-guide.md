@@ -46,12 +46,17 @@ envcrypt push my-app --env prod --env-file .env.prod
 ### `envcrypt pull [project-name] --env <env-name>`
 Download and decrypt environment variables to your local machine. If `[project-name]` is left blank, the selector defaults to the git repository name.
 
-### `envcrypt run [project-name] --env <env-name> -- <command> [args...]`
+### `envcrypt run [project-name] [env-name] [--] <command> [args...]`
 Run a command with secrets injected at runtime. If `[project-name]` is left blank, the selector defaults to the git repository name.
-Example:
-```/dev/null/cli-guide.md#L1-2
-envcrypt run my-app --env prod -- npm start
+Examples:
+```/dev/null/cli-guide.md#L1-4
+envcrypt run my-app prod -- npm start
+envcrypt run --project my-app --env prod npm start
+envcrypt run --env prod --env-file .env.local -- npm start
 ```
+Options:
+- `--env-file`: Merge a local `.env` file before execution.
+- `--print`: Print injected keys and exit.
 
 ### `envcrypt diff`
 Diff two environment versions or show changes between local and remote.

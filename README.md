@@ -34,9 +34,13 @@ For more installation options, see the [Getting Started Guide](docs/getting-star
 
 Run any command with secrets injected into its environment at execution time:
 
-```/dev/null/README.md#L1-3
-envcrypt run my-project --env prod -- npm start
+```/dev/null/README.md#L1-4
+envcrypt run my-project prod -- npm start
+envcrypt run --project my-project --env prod npm start
+envcrypt run --env prod --env-file .env.local -- npm start
 ```
+
+Use `--print` to preview injected keys without running the command.
 
 ## License
 MIT License.
