@@ -20,6 +20,7 @@ EnvCrypt CLI is the client-side tool for the EnvCrypt platform. It implements a 
 -   **Immutable Versioning**: Every `push` creates a new, immutable version. Rollback to any previous state instantly.
 -   **Granular Access Control**: Manage access for team members and robustly handle user revocation.
 -   **Service Roles**: Securely inject secrets into CI/CD pipelines using dedicated machine identities and OIDC.
+-   **Runtime Injection**: Run commands with decrypted env vars injected at runtime via `envcrypt run`.
 -   **Cross-Platform**: Works on Linux, macOS, and Windows.
 
 ## Quick Install
@@ -28,6 +29,14 @@ EnvCrypt CLI is the client-side tool for the EnvCrypt platform. It implements a 
 curl -fsSL https://raw.githubusercontent.com/envcrypts/envcrypt-cli/main/install.sh | bash
 ```
 For more installation options, see the [Getting Started Guide](docs/getting-started.md).
+
+## Runtime Injection
+
+Run any command with secrets injected into its environment at execution time:
+
+```/dev/null/README.md#L1-3
+envcrypt run my-project --env prod -- npm start
+```
 
 ## License
 MIT License.

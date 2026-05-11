@@ -67,7 +67,7 @@ func init() {
 func assignGroups() {
 	for _, c := range rootCmd.Commands() {
 		switch c.Name() {
-		case "pull", "push", "diff", "rollback", "rotate":
+		case "pull", "push", "diff", "rollback", "rotate", "run":
 			c.GroupID = "workflow"
 		case "create", "delete", "list", "audit":
 			c.GroupID = "mgmt"
