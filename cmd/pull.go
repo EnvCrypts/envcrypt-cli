@@ -19,8 +19,8 @@ var (
 )
 
 var pullCmd = &cobra.Command{
-	Use:          "pull [project]",
-	Short:        "Download and decrypt environment variables",
+	Use:   "pull [project]",
+	Short: "Download and decrypt environment variables",
 	Long: `Download environment variables from a project and write them to a .env file.
 If no project name is provided, the selector defaults to the current git repository name.
 
@@ -55,7 +55,7 @@ Examples:
 
 			projectName, err = tui.RunPickerWithDefault("Select a project to pull from", names, defaultProject)
 			if err != nil {
-				return tui.Cancelled()
+				return handlePromptError(err, "project is required in non-interactive mode", "Use --project or pass [project]")
 			}
 		}
 
@@ -64,7 +64,7 @@ Examples:
 		if envName == "" {
 			picked, err := tui.RunEnvPicker(projectName)
 			if err != nil {
-				return tui.Cancelled()
+				return handlePromptError(err, "environment is required in non-interactive mode", "Use --env to provide the environment")
 			}
 			envName = picked
 		}
@@ -78,6 +78,9 @@ Examples:
 		tui.Info("Environment: " + envName)
 
 		if fileExists(envPath) && !pullYes {
+			if !tui.IsInteractive() {
+				return tui.Error("env file already exists", nil, "Use --yes to overwrite")
+			}
 			if !tui.ConfirmOverwrite(envPath) {
 				return tui.Cancelled()
 			}
@@ -114,6 +117,7 @@ Examples:
 		}
 
 		tui.Success(fmt.Sprintf("Pulled %s/%s → %s", projectName, envName, envPath))
+		tui.Info("Next: run 'envcrypt run ...' to inject secrets at runtime.")
 		return nil
 	},
 }

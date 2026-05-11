@@ -27,7 +27,10 @@ Examples:
 
 		if newProjectName == "" {
 			vals, err := tui.RunForm([]tui.FormField{{Label: "New Project Name", Required: true, Validate: tui.ValidateProjectName}}, nil)
-			if err != nil || len(vals) == 0 || vals[0] == "" {
+			if err != nil {
+				return handlePromptError(err, "project name is required in non-interactive mode", "Use --project to provide the new project name")
+			}
+			if len(vals) == 0 || vals[0] == "" {
 				return tui.Cancelled()
 			}
 			newProjectName = vals[0]
@@ -36,7 +39,10 @@ Examples:
 		filename := snapshotImportFilename
 		if filename == "" {
 			vals, err := tui.RunForm([]tui.FormField{{Label: "Filename to import from", Required: true, Validate: tui.ValidateFileExists}}, []string{newProjectName + ".json"})
-			if err != nil || len(vals) == 0 || vals[0] == "" {
+			if err != nil {
+				return handlePromptError(err, "filename is required in non-interactive mode", "Use --file to provide an import path")
+			}
+			if len(vals) == 0 || vals[0] == "" {
 				return tui.Cancelled()
 			}
 			filename = vals[0]

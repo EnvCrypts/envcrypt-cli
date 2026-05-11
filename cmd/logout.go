@@ -28,7 +28,7 @@ Examples:
 		err := tui.RunActionWithSpinner("Logging out...", func() error {
 			return Application.Logout(context.Background(), email)
 		})
-		
+
 		if err != nil {
 			return tui.Error("not logged in", err)
 		}

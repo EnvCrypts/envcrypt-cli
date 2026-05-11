@@ -46,7 +46,7 @@ Examples:
 			}
 			projectName, err = tui.RunPicker("Select a project", names)
 			if err != nil {
-				return tui.Cancelled()
+				return handlePromptError(err, "project is required in non-interactive mode", "Use --project or pass [project]")
 			}
 		}
 
@@ -54,7 +54,7 @@ Examples:
 		if envName == "" {
 			picked, err := tui.RunEnvPicker(projectName)
 			if err != nil {
-				return tui.Cancelled()
+				return handlePromptError(err, "environment is required in non-interactive mode", "Use --env to provide the environment")
 			}
 			envName = picked
 		}
@@ -95,13 +95,16 @@ Examples:
 				labels[i] = label
 			}
 
+			if !tui.IsInteractive() {
+				return tui.Error("version selection is required in non-interactive mode", nil, "Provide old and new versions as arguments")
+			}
 			oldLabel, err := tui.RunPicker("Base version (old)", labels)
 			if err != nil {
-				return tui.Cancelled()
+				return handlePromptError(err, "version selection is required in non-interactive mode", "Provide old and new versions as arguments")
 			}
 			newLabel, err := tui.RunPicker("Target version (new)", labels)
 			if err != nil {
-				return tui.Cancelled()
+				return handlePromptError(err, "version selection is required in non-interactive mode", "Provide old and new versions as arguments")
 			}
 
 			// Map label back to version number

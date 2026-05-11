@@ -51,7 +51,7 @@ Available filters:
 
   # Filter by date range and limit results
   envcrypt audit project my-project --from "2023-10-01T00:00:00Z" --to "2023-10-31T23:59:59Z" --limit 100`,
-	Args:  cobra.MaximumNArgs(1),
+	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var projectName string
 		if len(args) == 1 {
@@ -72,7 +72,7 @@ Available filters:
 			}
 			projectName, err = tui.RunPicker("Select a project to view audit logs", names)
 			if err != nil {
-				return tui.Cancelled()
+				return handlePromptError(err, "project is required in non-interactive mode", "Use --project or pass [project]")
 			}
 		}
 

@@ -33,18 +33,18 @@ var (
 
 	// Structural Styles
 	HeaderStyle = lipgloss.NewStyle().Foreground(ColorMuted).Bold(true)
-	
+
 	BoxStyleWarn = lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(ColorWarn).
-		Padding(1).
-		MarginTop(1)
-		
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(ColorWarn).
+			Padding(1).
+			MarginTop(1)
+
 	BoxStylePrimary = lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(ColorPrimary).
-		Padding(1).
-		MarginTop(1)
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(ColorPrimary).
+			Padding(1).
+			MarginTop(1)
 
 	// Centralised navigation hint strings
 	TableNavHint  = "↑/↓ to navigate  •  q to quit"

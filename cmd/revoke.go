@@ -15,8 +15,8 @@ var (
 )
 
 var revokeCmd = &cobra.Command{
-	Use:          "revoke [project]",
-	Short:        "Revoke a user's access to a project",
+	Use:   "revoke [project]",
+	Short: "Revoke a user's access to a project",
 	Long: `Revoke a user's access to a project without removing the member.
 
 Use --force to skip the confirmation prompt.
@@ -45,7 +45,7 @@ Examples:
 			}
 			projectName, err = tui.RunPicker("Select a project to revoke access on", names)
 			if err != nil {
-				return tui.Cancelled()
+				return handlePromptError(err, "project is required in non-interactive mode", "Use --project or pass [project]")
 			}
 		}
 
@@ -55,7 +55,7 @@ Examples:
 				{Label: fmt.Sprintf("Email to revoke on %q", projectName), Required: true, Validate: tui.ValidateEmail},
 			}, []string{""})
 			if err != nil {
-				return tui.Cancelled()
+				return handlePromptError(err, "email is required in non-interactive mode", "Use --email to provide the member address")
 			}
 			revokeEmail = vals[0]
 		}

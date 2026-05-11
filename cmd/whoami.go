@@ -8,8 +8,8 @@ import (
 )
 
 var whoamiCmd = &cobra.Command{
-	Use:          "whoami",
-	Short:        "Show the current authenticated user",
+	Use:   "whoami",
+	Short: "Show the current authenticated user",
 	Long: `Display the identity currently logged into EnvCrypt.
 
 Examples:

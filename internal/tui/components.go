@@ -3,9 +3,9 @@ package tui
 import (
 	"encoding/base64"
 	"fmt"
+	"regexp"
 	"sort"
 	"strings"
-	"regexp"
 
 	"github.com/envcrypts/envcrypt-cli/internal/config"
 	cryptoutils "github.com/envcrypts/envcrypt-cli/internal/crypto"
@@ -211,7 +211,7 @@ func PrintServiceRoleDetail(role *config.ServiceRole) {
 	}
 
 	Info(fmt.Sprintf("Service Role: %s", role.Name))
-	
+
 	fmt.Printf("  %s %s\n", HeaderStyle.Render("ID:"), role.ID)
 	fmt.Printf("  %s %s\n", HeaderStyle.Render("Repo:"), role.RepoPrincipal)
 	fmt.Printf("  %s %s\n", HeaderStyle.Render("Created By:"), role.CreatedBy)

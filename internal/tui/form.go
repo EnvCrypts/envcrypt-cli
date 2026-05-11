@@ -154,7 +154,7 @@ func (m formModel) values() []string {
 
 func RunForm(fields []FormField, prefills []string) ([]string, error) {
 	if !IsInteractive() {
-		return nil, fmt.Errorf("not a terminal: provide required values via flags")
+		return nil, ErrNonInteractive
 	}
 	m := newFormModel(fields, prefills)
 	p := tea.NewProgram(m)

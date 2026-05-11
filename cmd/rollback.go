@@ -46,7 +46,7 @@ Examples:
 			}
 			projectName, err = tui.RunPicker("Select a project", names)
 			if err != nil {
-				return tui.Cancelled()
+				return handlePromptError(err, "project is required in non-interactive mode", "Use --project or pass [project]")
 			}
 		}
 
@@ -54,7 +54,7 @@ Examples:
 		if envName == "" {
 			picked, err := tui.RunEnvPicker(projectName)
 			if err != nil {
-				return tui.Cancelled()
+				return handlePromptError(err, "environment is required in non-interactive mode", "Use --env to provide the environment")
 			}
 			envName = picked
 		}
@@ -103,12 +103,15 @@ Examples:
 				return tui.Error("no previous versions to rollback to", nil)
 			}
 
+			if !tui.IsInteractive() {
+				return tui.Error("version selection is required in non-interactive mode", nil, "Provide a target version with --version")
+			}
 			picked, err := tui.RunPicker(
 				fmt.Sprintf("Rollback %s/%s  (current: v%d)", projectName, envName, currentVersion.Version),
 				labels,
 			)
 			if err != nil {
-				return tui.Cancelled()
+				return handlePromptError(err, "version selection is required in non-interactive mode", "Provide a target version with --version")
 			}
 			v32 := verMap[picked]
 			targetVersion = &v32

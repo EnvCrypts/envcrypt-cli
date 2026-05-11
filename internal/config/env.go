@@ -9,7 +9,7 @@ type AddEnvRequest struct {
 	ProjectId uuid.UUID `json:"project_id"`
 	UserId    uuid.UUID `json:"user_id"`
 
-	EnvName    string `json:"env_name"`
+	EnvName           string `json:"env_name"`
 	CipherText        []byte `json:"cipher_text"`
 	Nonce             []byte `json:"nonce"`
 	WrappedDEK        []byte `json:"wrapped_dek,omitempty"`
@@ -52,8 +52,8 @@ type EnvResponse struct {
 	WrappedDEK        []byte   `json:"wrapped_dek,omitempty"`
 	DekNonce          []byte   `json:"dek_nonce,omitempty"`
 	EncryptionVersion int32    `json:"encryption_version"`
-	Version    int32    `json:"version"`
-	Metadata   Metadata `json:"metadata"`
+	Version           int32    `json:"version"`
+	Metadata          Metadata `json:"metadata"`
 }
 type GetEnvVersionsResponse struct {
 	EnvVersions []EnvResponse `json:"env_versions"`
@@ -70,4 +70,3 @@ type GetEnvForCIResponse struct {
 	DekNonce          []byte `json:"dek_nonce,omitempty"`
 	EncryptionVersion int32  `json:"encryption_version"`
 }
-

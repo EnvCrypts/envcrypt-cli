@@ -18,8 +18,8 @@ var (
 )
 
 var pushCmd = &cobra.Command{
-	Use:          "push [project]",
-	Short:        "Encrypt and upload environment variables",
+	Use:   "push [project]",
+	Short: "Encrypt and upload environment variables",
 	Long: `Encrypt variables from a .env file and upload them to a project environment.
 If no project name is provided, the selector defaults to the current git repository name.
 
@@ -54,7 +54,7 @@ Examples:
 
 			projectName, err = tui.RunPickerWithDefault("Select a project to push to", names, defaultProject)
 			if err != nil {
-				return tui.Cancelled()
+				return handlePromptError(err, "project is required in non-interactive mode", "Use --project or pass [project]")
 			}
 		}
 
@@ -63,7 +63,7 @@ Examples:
 		if envName == "" {
 			picked, err := tui.RunEnvPicker(projectName)
 			if err != nil {
-				return tui.Cancelled()
+				return handlePromptError(err, "environment is required in non-interactive mode", "Use --env to provide the environment")
 			}
 			envName = picked
 		}
@@ -78,12 +78,12 @@ Examples:
 
 		fileData, err := os.ReadFile(envPath)
 		if err != nil {
-			return tui.Error("failed to read env file", mapEnvReadError(envPath, err))
+			return tui.Error(mapEnvReadError(envPath, err).Error(), nil)
 		}
 
 		envMap, err := cryptoutils.ParseEnv(fileData)
 		if err != nil {
-			return tui.Error("failed to parse env file", mapEnvReadError(envPath, err))
+			return tui.Error(fmt.Sprintf("failed to parse env file %q", envPath), nil, "Ensure each line is formatted as KEY=VALUE")
 		}
 		if len(envMap) == 0 {
 			return tui.Error(
@@ -104,6 +104,7 @@ Examples:
 		}
 
 		tui.Success(fmt.Sprintf("Uploaded environment variables to %s/%s", projectName, envName))
+		tui.Info("Next: run 'envcrypt pull' or 'envcrypt run' to use them.")
 		return nil
 	},
 }

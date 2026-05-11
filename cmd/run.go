@@ -30,7 +30,8 @@ Examples:
   envcrypt run my-project prod npm start
   envcrypt run --project my-project --env dev -- python app.py
   envcrypt run --env staging -- npm run build`,
-	Args: cobra.ArbitraryArgs,
+	Args:         cobra.ArbitraryArgs,
+	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		dashIndex := cmd.ArgsLenAtDash()
 		commandArgs := []string{}
@@ -111,7 +112,7 @@ Examples:
 
 			projectName, err = tui.RunPickerWithDefault("Select a project to run", names, defaultProject)
 			if err != nil {
-				return tui.Cancelled()
+				return handlePromptError(err, "project is required in non-interactive mode", "Use --project or provide [project]")
 			}
 		}
 
@@ -122,7 +123,7 @@ Examples:
 		if envName == "" {
 			picked, err := tui.RunEnvPicker(projectName)
 			if err != nil {
-				return tui.Cancelled()
+				return handlePromptError(err, "environment is required in non-interactive mode", "Use --env or provide [env]")
 			}
 			envName = picked
 		}
@@ -146,11 +147,11 @@ Examples:
 		if runEnvFile != "" {
 			fileBytes, err := os.ReadFile(runEnvFile)
 			if err != nil {
-				return tui.Error("failed to read env file", mapEnvReadError(runEnvFile, err))
+				return tui.Error(mapEnvReadError(runEnvFile, err).Error(), nil)
 			}
 			fileEnv, err := cryptoutils.ParseEnv(fileBytes)
 			if err != nil {
-				return tui.Error("failed to parse env file", err)
+				return tui.Error(fmt.Sprintf("failed to parse env file %q", runEnvFile), nil, "Ensure each line is formatted as KEY=VALUE")
 			}
 			envMap = mergeEnvMaps(fileEnv, envMap)
 		}

@@ -10,8 +10,8 @@ import (
 )
 
 var createCmd = &cobra.Command{
-	Use:          "create [project]",
-	Short:        "Create a new project",
+	Use:   "create [project]",
+	Short: "Create a new project",
 	Long: `Create a new encrypted project.
 If no project name is provided, it defaults to the current git repository name.
 
@@ -39,7 +39,7 @@ Examples:
 				{Label: "Project Name", Required: true, Validate: tui.ValidateProjectName},
 			}, []string{defaultProject})
 			if err != nil {
-				return tui.Cancelled()
+				return handlePromptError(err, "project name is required in non-interactive mode", "Pass a project name as an argument")
 			}
 			projectName = vals[0]
 		}
@@ -56,6 +56,7 @@ Examples:
 		}
 
 		tui.Success(fmt.Sprintf("Project %q created", projectName))
+		tui.Info("Next: run 'envcrypt push --env dev --env-file .env' to add secrets.")
 		return nil
 	},
 }

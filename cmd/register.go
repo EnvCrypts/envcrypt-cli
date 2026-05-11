@@ -38,7 +38,7 @@ Examples:
 
 		vals, err := tui.RunForm(fields, prefills)
 		if err != nil {
-			return tui.Cancelled()
+			return handlePromptError(err, "registration requires interactive input", "Run in an interactive terminal to enter account details")
 		}
 
 		var collectedEmail, password, backendURL string
@@ -70,6 +70,7 @@ Examples:
 		tui.Info("\nIMPORTANT: Store your recovery key safely. It is the only way to recover your account if you forget your password:")
 		tui.Success(keypair.RecoveryKey)
 		tui.Info("This key will never be shown again.\n")
+		tui.Info("Next: run 'envcrypt login' to start using your secrets.")
 		return nil
 	},
 }

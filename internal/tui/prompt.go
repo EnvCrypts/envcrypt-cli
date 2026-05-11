@@ -61,7 +61,7 @@ func ConfirmDangerousAction(prompt, expected string, force ...bool) bool {
 		return true
 	}
 	if !IsInteractive() {
-		Warn(fmt.Sprintf("Non-interactive: skipping confirmation for %q (use --force to override)", prompt))
+		Warn(fmt.Sprintf("Non-interactive: confirmation required for %q (use --force to override)", prompt))
 		return false
 	}
 	p := tea.NewProgram(confirmModel{prompt: prompt, expected: expected})
@@ -73,14 +73,12 @@ func ConfirmDangerousAction(prompt, expected string, force ...bool) bool {
 	return ok && final.done
 }
 
-
 func ConfirmOverwrite(path string) bool {
 	if !IsInteractive() {
 		return false
 	}
 	return ConfirmDangerousAction(fmt.Sprintf("Overwrite %q?", path), "yes")
 }
-
 
 func PromptWithDefault(label, defaultVal string) string {
 	if !IsInteractive() {

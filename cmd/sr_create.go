@@ -12,7 +12,7 @@ var serviceRoleCreateCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create a new service role",
 	Long: `Create a new service role for CI/CD automation.
-  
+
 Examples:
   envcrypt service-role create \
     --repo github:acme/billing-backend:ref:refs/heads/main \
@@ -31,6 +31,15 @@ Examples:
 		} else {
 			// Try auto-detect for defaults
 			_, defRepo, defBranch, _ := DetectGitContext()
+
+			if !tui.IsInteractive() {
+				if repo == "" && defRepo == "" {
+					return tui.Error("repo is required in non-interactive mode", nil, "Use --repo to provide the repository")
+				}
+				if branch == "" && defBranch == "" {
+					return tui.Error("branch is required in non-interactive mode", nil, "Use --branch to provide the branch")
+				}
+			}
 
 			// Prompt if flags weren't provided
 			if repo == "" {

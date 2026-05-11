@@ -15,8 +15,8 @@ var (
 )
 
 var rotateCmd = &cobra.Command{
-	Use:          "rotate [project]",
-	Short:        "Rotate a project's Root Key (PRK) and rewrap Data Encryption Keys (DEKs)",
+	Use:   "rotate [project]",
+	Short: "Rotate a project's Root Key (PRK) and rewrap Data Encryption Keys (DEKs)",
 	Long: `Performs a client-side rotation of the Project Root Key (PRK) without exposing plaintext keys to the server.
 
 Use --force to skip the confirmation prompt.
@@ -59,7 +59,7 @@ Examples:
 			}
 			projectName, err = tui.RunPicker("Select a project to rotate its PRK", adminProjects)
 			if err != nil {
-				return tui.Cancelled()
+				return handlePromptError(err, "project is required in non-interactive mode", "Use --project to select a project")
 			}
 			for _, p := range projectsResp.Projects {
 				if p.Name == projectName {
@@ -77,7 +77,7 @@ Examples:
 		}
 
 		var newVersion int32
-		
+
 		err = tui.RunActionWithSpinner(fmt.Sprintf("Rotating PRK for project %q...", projectName), func() error {
 			ver, rotateErr := Application.RotatePRK(context.Background(), projectID)
 			if rotateErr != nil {

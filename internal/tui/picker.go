@@ -66,7 +66,6 @@ func (m pickerModel) View() string {
 	return b.String()
 }
 
-
 func RunPicker(title string, items []string) (string, error) {
 	return RunPickerWithDefault(title, items, "")
 }
@@ -76,7 +75,7 @@ func RunPickerWithDefault(title string, items []string, defaultItem string) (str
 		return "", fmt.Errorf("no items to pick from")
 	}
 	if !IsInteractive() {
-		return "", fmt.Errorf("not a terminal: provide required values via flags")
+		return "", ErrNonInteractive
 	}
 
 	cursor := 0
@@ -100,7 +99,6 @@ func RunPickerWithDefault(title string, items []string, defaultItem string) (str
 	}
 	return final.chosen, nil
 }
-
 
 func RunEnvPicker(projectName string) (string, error) {
 	const other = "Other..."

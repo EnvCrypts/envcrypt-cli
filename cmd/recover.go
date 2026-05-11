@@ -11,8 +11,8 @@ import (
 )
 
 var recoverCmd = &cobra.Command{
-	Use:          "recover",
-	Short:        "Recover account access using your recovery key",
+	Use:   "recover",
+	Short: "Recover account access using your recovery key",
 	Long: `Recover performs a zero-knowledge recovery flow to restore access
 to your account if you lost your password, but saved your recovery key.
 
@@ -29,7 +29,7 @@ Examples:
 				{Label: "Email", Required: true, Validate: tui.ValidateEmail},
 			}, []string{""})
 			if err != nil {
-				return tui.Cancelled()
+				return handlePromptError(err, "email is required in non-interactive mode", "Provide an email address to recover")
 			}
 			if len(vals) == 0 {
 				return tui.Cancelled()
@@ -57,7 +57,7 @@ Examples:
 			{Label: "Recovery Key", Secret: true, Required: true},
 		}, []string{""})
 		if err != nil {
-			return tui.Cancelled()
+			return handlePromptError(err, "recovery key is required in non-interactive mode", "Run in an interactive terminal to enter the recovery key")
 		}
 		if len(vals) == 0 {
 			return tui.Cancelled()
@@ -74,14 +74,14 @@ Examples:
 		if err != nil {
 			return tui.Error("Invalid recovery key", err)
 		}
-		
+
 		tui.Success("Recovery key accepted!")
 
 		vals, err = tui.RunForm([]tui.FormField{
 			{Label: "New Password", Secret: true, Required: true},
 		}, []string{""})
 		if err != nil {
-			return tui.Cancelled()
+			return handlePromptError(err, "password is required in non-interactive mode", "Run in an interactive terminal to enter a new password")
 		}
 		if len(vals) == 0 {
 			return tui.Cancelled()

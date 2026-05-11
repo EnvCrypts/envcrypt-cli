@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"os"
+
+	"github.com/envcrypts/envcrypt-cli/internal/tui"
 )
 
 func mapEnvReadError(path string, err error) error {
@@ -35,4 +37,17 @@ func resolveEnvFile(flagPath string) (string, error) {
 func fileExists(path string) bool {
 	info, err := os.Stat(path)
 	return err == nil && !info.IsDir()
+}
+
+func handlePromptError(err error, message, hint string) error {
+	if err == nil {
+		return nil
+	}
+	if errors.Is(err, tui.ErrNonInteractive) {
+		return tui.Error(message, nil, hint)
+	}
+	if errors.Is(err, tui.ErrCancelled) {
+		return tui.Cancelled()
+	}
+	return tui.Error("prompt failed", err)
 }

@@ -11,8 +11,8 @@ import (
 var deleteForce bool
 
 var deleteCmd = &cobra.Command{
-	Use:           "delete [project]",
-	Short:         "Delete a project",
+	Use:   "delete [project]",
+	Short: "Delete a project",
 	Long: `Delete a project and all associated encrypted data.
 
 Use --force to skip the confirmation prompt.
@@ -43,7 +43,7 @@ Examples:
 			}
 			projectName, err = tui.RunPicker("Select a project to delete", names)
 			if err != nil {
-				return tui.Cancelled()
+				return handlePromptError(err, "project is required in non-interactive mode", "Use --project or pass [project]")
 			}
 		}
 

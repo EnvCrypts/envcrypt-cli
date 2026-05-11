@@ -34,7 +34,7 @@ Examples:
 				{Label: "Service Role Principal", Required: true},
 			}, []string{defPrincipal})
 			if err != nil {
-				return tui.Cancelled()
+				return handlePromptError(err, "service role principal is required in non-interactive mode", "Use --principal to provide the repo principal")
 			}
 			roleName = vals[0]
 		}
@@ -63,7 +63,7 @@ Examples:
 
 			project, err = tui.RunPicker("Select a project (admin only)", adminNames)
 			if err != nil {
-				return tui.Cancelled()
+				return handlePromptError(err, "project is required in non-interactive mode", "Use --project to select a project")
 			}
 		}
 
@@ -71,7 +71,7 @@ Examples:
 		if env == "" {
 			picked, err := tui.RunEnvPicker(project)
 			if err != nil {
-				return tui.Cancelled()
+				return handlePromptError(err, "environment is required in non-interactive mode", "Use --env to provide the environment")
 			}
 			env = picked
 		}

@@ -23,6 +23,9 @@ Examples:
 		}
 
 		if repoPrincipal == "" {
+			if !tui.IsInteractive() {
+				return tui.Error("service role principal is required in non-interactive mode", nil, "Use --principal or pass the principal as an argument")
+			}
 			defPrincipal, _, _, _ := DetectGitContext()
 			repoPrincipal = tui.PromptWithDefault("Service Role Principal", defPrincipal)
 		}

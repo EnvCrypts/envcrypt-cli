@@ -39,7 +39,7 @@ Examples:
 
 		vals, err := tui.RunForm(fields, prefills)
 		if err != nil {
-			return tui.Cancelled()
+			return handlePromptError(err, "login requires interactive input", "Run in an interactive terminal to enter credentials")
 		}
 
 		var collectedEmail, password, backendURL string
@@ -65,6 +65,7 @@ Examples:
 		}
 
 		tui.Success("Login successful")
+		tui.Info("Next: run 'envcrypt pull' or 'envcrypt run' to use your secrets.")
 		return nil
 	},
 }

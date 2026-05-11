@@ -14,8 +14,8 @@ var (
 )
 
 var grantCmd = &cobra.Command{
-	Use:          "grant [project]",
-	Short:        "Grant a user's access to a project",
+	Use:   "grant [project]",
+	Short: "Grant a user's access to a project",
 	Long: `Grant or restore a user's access to a project without re-adding the member.
 
 Examples:
@@ -41,7 +41,7 @@ Examples:
 			}
 			projectName, err = tui.RunPicker("Select a project to grant access on", names)
 			if err != nil {
-				return tui.Cancelled()
+				return handlePromptError(err, "project is required in non-interactive mode", "Use --project or pass [project]")
 			}
 		}
 
@@ -50,7 +50,7 @@ Examples:
 				{Label: fmt.Sprintf("Email to grant on %q", projectName), Required: true, Validate: tui.ValidateEmail},
 			}, []string{""})
 			if err != nil {
-				return tui.Cancelled()
+				return handlePromptError(err, "email is required in non-interactive mode", "Use --email to provide the member address")
 			}
 			grantEmail = vals[0]
 		}

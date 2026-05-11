@@ -14,8 +14,8 @@ var (
 )
 
 var addCmd = &cobra.Command{
-	Use:          "add [project]",
-	Short:        "Add a user to a project",
+	Use:   "add [project]",
+	Short: "Add a user to a project",
 	Long: `Add a user to a project.
 
 Examples:
@@ -42,7 +42,7 @@ Examples:
 			}
 			projectName, err = tui.RunPicker("Select a project", names)
 			if err != nil {
-				return tui.Cancelled()
+				return handlePromptError(err, "project is required in non-interactive mode", "Use --project or pass [project]")
 			}
 		}
 
@@ -52,7 +52,7 @@ Examples:
 				{Label: fmt.Sprintf("Member Email for %q", projectName), Required: true, Validate: tui.ValidateEmail},
 			}, []string{""})
 			if err != nil {
-				return tui.Cancelled()
+				return handlePromptError(err, "email is required in non-interactive mode", "Use --email to provide the member address")
 			}
 			addEmail = vals[0]
 		}

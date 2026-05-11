@@ -31,7 +31,7 @@ func TestKeyCrypto(t *testing.T) {
 
 	t.Run("KeyPairs", func(t *testing.T) {
 		password := "my_test_password"
-		
+
 		keypair, err := GenerateKeyPair(password)
 		require.NoError(t, err)
 		assert.Len(t, keypair.PrivateKey, 32)

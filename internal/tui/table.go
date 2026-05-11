@@ -187,7 +187,7 @@ func RunAuditTable(logs []config.AuditEntry, total int) error {
 			}
 
 			fmt.Printf("%-15s  %-20s  %-16s  %-8s  %-10s\n", timestamp, Truncate(row.ActorEmail, 20), row.Action, row.Status, env)
-			
+
 			if strings.ToLower(row.Status) != "success" && row.ErrorMessage != "" {
 				fmt.Printf("   └── Error: %s\n", row.ErrorMessage)
 			}
@@ -210,12 +210,12 @@ func RunAuditTable(logs []config.AuditEntry, total int) error {
 		if row.Environment != nil && *row.Environment != "" {
 			env = *row.Environment
 		}
-		
+
 		actor := row.ActorEmail
 		if actor == "" {
 			actor = "System"
 		}
-		
+
 		status := row.Status
 		if strings.ToLower(row.Status) != "success" {
 			if row.ErrorMessage != "" {
@@ -226,7 +226,7 @@ func RunAuditTable(logs []config.AuditEntry, total int) error {
 				status = fmt.Sprintf("failed (%s)", errMsg)
 			}
 		}
-		
+
 		rows[i] = table.Row{
 			timestamp,
 			Truncate(actor, 18),
@@ -235,7 +235,7 @@ func RunAuditTable(logs []config.AuditEntry, total int) error {
 			Truncate(status, 22),
 		}
 	}
-	
+
 	err := runTable(styledTable([]table.Column{
 		{Title: "Time", Width: 14},
 		{Title: "Actor", Width: 18},

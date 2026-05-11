@@ -1,8 +1,10 @@
 package tui
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"sort"
@@ -34,6 +36,24 @@ func RenderError(err error) {
 		return
 	}
 
+	if errors.Is(err, context.DeadlineExceeded) {
+		renderUIError(&UIError{
+			Message: "Request timed out",
+			Hint:    "Check your network connection and try again",
+			Action:  "Retry the command",
+		})
+		return
+	}
+	var netErr net.Error
+	if errors.As(err, &netErr) && netErr.Timeout() {
+		renderUIError(&UIError{
+			Message: "Request timed out",
+			Hint:    "Check your network connection and try again",
+			Action:  "Retry the command",
+		})
+		return
+	}
+
 	var uiErr *UIError
 	if errors.As(err, &uiErr) {
 		renderUIError(uiErr)
@@ -50,6 +70,8 @@ func RenderError(err error) {
 		JSONData(map[string]any{
 			"level":   "error",
 			"message": err.Error(),
+			"hint":    "",
+			"action":  "",
 		})
 		return
 	}
@@ -66,12 +88,11 @@ func renderUIError(err *UIError) {
 		obj := map[string]any{
 			"level":   "error",
 			"message": err.Message,
+			"hint":    err.Hint,
+			"action":  err.Action,
 		}
 		if err.Err != nil {
 			obj["detail"] = err.Err.Error()
-		}
-		if err.Hint != "" {
-			obj["hint"] = err.Hint
 		}
 		JSONData(obj)
 		return
@@ -82,11 +103,11 @@ func renderUIError(err *UIError) {
 	} else {
 		fmt.Fprintf(os.Stderr, "%s %s\n", IconCross, err.Message)
 	}
-	if err.Err != nil {
-		fmt.Fprintf(os.Stderr, "  %s\n", StyleMuted.Render(err.Err.Error()))
-	}
 	if err.Hint != "" {
 		fmt.Fprintf(os.Stderr, "  %s %s\n", IconInfo, StyleInfo.Render(err.Hint))
+	}
+	if err.Action != "" {
+		fmt.Fprintf(os.Stderr, "  %s %s\n", IconInfo, StyleInfo.Render(err.Action))
 	}
 }
 
@@ -96,17 +117,17 @@ func renderHTTPError(err *client.HTTPError) {
 	}
 
 	if currentMode == ModeJSON {
+		action := apiErrorAction(err.Status, err.Code)
 		obj := map[string]any{
 			"level":   "error",
 			"status":  err.Status,
 			"code":    err.Code,
 			"message": renderAPIErrorTitle(err.Status, err.Code, err.Message),
+			"hint":    err.Hint,
+			"action":  action,
 		}
 		if err.Message != "" {
 			obj["detail"] = err.Message
-		}
-		if err.Hint != "" {
-			obj["hint"] = err.Hint
 		}
 		if len(err.Fields) > 0 {
 			obj["fields"] = err.Fields
@@ -132,8 +153,12 @@ func renderHTTPError(err *client.HTTPError) {
 			fmt.Fprintf(os.Stderr, "    %s: %s\n", key, err.Fields[key])
 		}
 	}
+	action := apiErrorAction(err.Status, err.Code)
 	if err.Hint != "" {
 		fmt.Fprintf(os.Stderr, "  %s %s\n", IconInfo, StyleInfo.Render(err.Hint))
+	}
+	if action != "" {
+		fmt.Fprintf(os.Stderr, "  %s %s\n", IconInfo, StyleInfo.Render(action))
 	}
 }
 
@@ -198,6 +223,31 @@ func renderAPIErrorTitle(status int, code, message string) string {
 		return code
 	}
 	return "Request failed"
+}
+
+func apiErrorAction(status int, code string) string {
+	normalizedCode := strings.ToUpper(code)
+
+	switch {
+	case status == http.StatusUnauthorized ||
+		normalizedCode == "SESSION_MISSING" ||
+		normalizedCode == "SESSION_INVALID" ||
+		normalizedCode == "SESSION_EXPIRED" ||
+		normalizedCode == "INVALID_CREDENTIALS" ||
+		normalizedCode == "INVALID_OIDC_TOKEN" ||
+		normalizedCode == "MISSING_IDENTITY" ||
+		normalizedCode == "USER_NOT_FOUND":
+		return "Run 'envcrypt login' to re-authenticate"
+	case status == http.StatusForbidden || normalizedCode == "FORBIDDEN":
+		return "Ask a project admin for access"
+	case status == http.StatusNotFound || strings.HasSuffix(normalizedCode, "_NOT_FOUND"):
+		return "Verify the name and try again"
+	case status == http.StatusConflict || normalizedCode == "CONFLICT":
+		return "Retry with a different name or state"
+	case normalizedCode == "VALIDATION_FAILED":
+		return "Fix the invalid fields and retry"
+	}
+	return ""
 }
 
 func sortedErrorFieldKeys(fields map[string]string) []string {

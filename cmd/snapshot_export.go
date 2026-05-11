@@ -43,14 +43,17 @@ Examples:
 
 			projectName, err = tui.RunPicker("Select a project to export", adminProjects)
 			if err != nil {
-				return tui.Cancelled()
+				return handlePromptError(err, "project is required in non-interactive mode", "Use --project to select a project")
 			}
 		}
 
 		filename := snapshotExportFilename
 		if filename == "" {
 			vals, err := tui.RunForm([]tui.FormField{{Label: "Filename to export to", Required: true}}, []string{projectName + ".json"})
-			if err != nil || len(vals) == 0 || vals[0] == "" {
+			if err != nil {
+				return handlePromptError(err, "filename is required in non-interactive mode", "Use --file to provide an export path")
+			}
+			if len(vals) == 0 || vals[0] == "" {
 				return tui.Cancelled()
 			}
 			filename = vals[0]

@@ -100,7 +100,6 @@ func (app *App) DeleteProject(ctx context.Context, projectName string) error {
 	return nil
 }
 
-
 func (app *App) RotatePRK(ctx context.Context, projectID string) (int32, error) {
 	userEmail, userId := viper.GetString("user.email"), viper.GetString("user.id")
 	if userEmail == "" || userId == "" {

@@ -53,7 +53,7 @@ func TestProjectCrypto(t *testing.T) {
 	t.Run("DEKLifecycle", func(t *testing.T) {
 		dek, _ := GenerateDEK()
 		prk := make([]byte, 32)
-		
+
 		wrapped, nonce, err := WrapDEK(prk, dek)
 		require.NoError(t, err)
 

@@ -24,7 +24,7 @@ func TestEnvUtils(t *testing.T) {
 		encoded, err := EncodeEnv(env)
 		require.NoError(t, err)
 		assert.Contains(t, string(encoded), "KEY2=\"VAL2\"")
-		
+
 		normalized := NormalizeEnv(env)
 		assert.Equal(t, "KEY1=VAL1\nKEY2=VAL2\n", string(normalized))
 	})
